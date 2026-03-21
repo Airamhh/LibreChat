@@ -12,6 +12,14 @@ import type { IBalance, IUser } from '@librechat/data-schemas';
 const router = Router();
 router.use(requireAdmin);
 
+const BAN_DURATION_MS = parseInt(process.env['BAN_DURATION'] ?? '0', 10);
+
+const SENSITIVE_FIELDS = new Set(['password', 'totpSecret', 'backupCodes', 'pendingTotpSecret', 'pendingBackupCodes']);
+
+function getBanLogs(): Keyv {
+  return new Keyv({ store: keyvMongo, namespace: ViolationTypes.BAN, ttl: 0 });
+}
+
 function getModels() {
   const User: mongoose.Model<IUser> =
     mongoose.models.User || mongoose.model<IUser>('User', userSchema);
@@ -60,8 +68,14 @@ router.patch('/:userId', async (req: ServerRequest, res: Response) => {
   try {
     const { User } = getModels();
     const { userId } = req.params as { userId: string };
-    const { name, email, role } = req.body as { name?: string; email?: string; role?: string };
+    const body = req.body as Record<string, unknown>;
 
+    const sensitiveAttempts = Object.keys(body).filter((k) => SENSITIVE_FIELDS.has(k));
+    if (sensitiveAttempts.length > 0) {
+      return res.status(400).json({ message: `Cannot update sensitive fields: ${sensitiveAttempts.join(', ')}` });
+    }
+
+    const { name, email, role } = body as { name?: string; email?: string; role?: string };
     const updates: Partial<IUser> = {};
     if (name !== undefined) {
       updates.name = name;
@@ -97,10 +111,8 @@ router.post('/:userId/ban', async (req: ServerRequest, res: Response) => {
     const { userId } = req.params as { userId: string };
     const { duration } = req.body as { duration?: number };
 
-    const BAN_DURATION = parseInt(process.env['BAN_DURATION'] ?? '0', 10);
-    const banDuration = duration ?? BAN_DURATION;
-
-    const banLogs = new Keyv({ store: keyvMongo, namespace: ViolationTypes.BAN, ttl: 0 });
+    const banDuration = duration ?? BAN_DURATION_MS;
+    const banLogs = getBanLogs();
     const expiresAt = banDuration > 0 ? Date.now() + banDuration : 0;
     await banLogs.set(userId, {
       type: ViolationTypes.BAN,
@@ -125,7 +137,7 @@ router.delete('/:userId/ban', async (req: ServerRequest, res: Response) => {
   try {
     const { userId } = req.params as { userId: string };
 
-    const banLogs = new Keyv({ store: keyvMongo, namespace: ViolationTypes.BAN, ttl: 0 });
+    const banLogs = getBanLogs();
     await banLogs.delete(userId);
 
     logger.info(`[admin/users] Unbanned user ${userId}`);

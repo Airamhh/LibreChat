@@ -259,3 +259,8 @@ export type TCustomRole = {
   name: string;
   permissions: Record<string, Record<string, boolean>>;
 };
+
+export type TCreateRolePayload = {
+  name: string;
+  permissions?: Record<string, Record<string, boolean>>;
+};

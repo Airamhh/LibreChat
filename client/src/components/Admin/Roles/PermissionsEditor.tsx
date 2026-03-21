@@ -127,18 +127,15 @@ export default function PermissionsEditor({ roleName }: PermissionsEditorProps) 
     setSaveError(null);
     setSaveSuccess(false);
 
-    const savableTypes = Object.keys(permissionTypeToMutation);
+    const savableTypes = Object.keys(permissionTypeToMutation).filter(
+      (permType) => getMutationForType(permType) !== null && localPerms[permType] !== undefined,
+    );
+
     try {
       await Promise.all(
         savableTypes.map((permType) => {
           const mutation = getMutationForType(permType);
-          if (!mutation || !localPerms[permType]) {
-            return Promise.resolve();
-          }
-          return mutation.mutateAsync({
-            roleName,
-            updates: localPerms[permType],
-          });
+          return mutation!.mutateAsync({ roleName, updates: localPerms[permType] });
         }),
       );
       setSaveSuccess(true);

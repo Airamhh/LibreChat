@@ -30,7 +30,7 @@ export default function YamlEditor() {
       await updateConfig.mutateAsync(yamlContent);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (err) {
+    } catch {
       setSaveError(localize('com_admin_save_error'));
     }
   };

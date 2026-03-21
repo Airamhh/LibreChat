@@ -8,13 +8,14 @@ import type {
   TAdminBanPayload,
   TAdminBalance,
   TAdminBalanceUpdate,
+  TCreateRolePayload,
   TError,
 } from 'librechat-data-provider';
 
 export const useCreateRoleMutation = (): UseMutationResult<
   TRole,
   TError,
-  { name: string; permissions?: Record<string, Record<string, boolean>> }
+  TCreateRolePayload
 > => {
   const queryClient = useQueryClient();
   return useMutation(

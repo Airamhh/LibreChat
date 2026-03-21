@@ -1091,7 +1091,7 @@ export function listRoles(): Promise<r.TRole[]> {
   return request.get(endpoints.adminRoles());
 }
 
-export function createRole(payload: { name: string; permissions?: Record<string, Record<string, boolean>> }): Promise<r.TRole> {
+export function createRole(payload: q.TCreateRolePayload): Promise<r.TRole> {
   return request.post(endpoints.adminRoles(), payload);
 }
 

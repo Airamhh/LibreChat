@@ -334,7 +334,7 @@ const listAllRoles = async function () {
  * @returns {Promise<void>}
  */
 const deleteRoleByName = async function (roleName) {
-  if (SystemRoles[roleName]) {
+  if (SystemRoles[roleName.toUpperCase()]) {
     throw new Error(`Cannot delete system role: ${roleName}`);
   }
   const cache = getLogStores(CacheKeys.ROLES);

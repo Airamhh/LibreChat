@@ -12,8 +12,12 @@ import type { ServerRequest } from '~/types/http';
 const router = Router();
 router.use(requireAdmin);
 
-const projectRoot = path.resolve(__dirname, '..', '..', '..', '..', '..', '..');
-const defaultConfigPath = path.resolve(projectRoot, 'librechat.yaml');
+const defaultConfigPath = path.resolve(
+  process.env['PROJECT_ROOT'] || path.join(__dirname, '..', '..', '..', '..', '..', '..'),
+  'librechat.yaml',
+);
+
+const isRemoteUrl = (p: string): boolean => /^https?:\/\//.test(p);
 
 function getConfigPath(): string {
   return process.env['CONFIG_PATH'] || defaultConfigPath;
@@ -27,7 +31,7 @@ router.get('/yaml', async (_req: ServerRequest, res: Response) => {
   try {
     const configPath = getConfigPath();
 
-    if (!/^https?:\/\//.test(configPath) && !fs.existsSync(configPath)) {
+    if (!isRemoteUrl(configPath) && !fs.existsSync(configPath)) {
       return res.status(404).json({ message: 'Config file not found' });
     }
 
@@ -67,7 +71,7 @@ router.put('/yaml', async (req: ServerRequest, res: Response) => {
     }
 
     const configPath = getConfigPath();
-    if (/^https?:\/\//.test(configPath)) {
+    if (isRemoteUrl(configPath)) {
       return res
         .status(400)
         .json({ message: 'Cannot write to a remote config URL' });
