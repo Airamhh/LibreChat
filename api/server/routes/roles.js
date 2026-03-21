@@ -12,7 +12,7 @@ const {
   remoteAgentsPermissionsSchema,
 } = require('librechat-data-provider');
 const { checkAdmin, requireJwtAuth } = require('~/server/middleware');
-const { updateRoleByName, getRoleByName } = require('~/models/Role');
+const { updateRoleByName, getRoleByName, createRole, listAllRoles, deleteRoleByName } = require('~/models/Role');
 
 const router = express.Router();
 router.use(requireJwtAuth);
@@ -171,5 +171,55 @@ router.put('/:roleName/marketplace', checkAdmin, createPermissionUpdateHandler('
  * Update remote agents (API) permissions for a specific role
  */
 router.put('/:roleName/remote-agents', checkAdmin, createPermissionUpdateHandler('remote-agents'));
+
+/**
+ * GET /api/roles
+ * List all roles (admin only)
+ */
+router.get('/', checkAdmin, async (req, res) => {
+  try {
+    const roles = await listAllRoles();
+    res.status(200).send(roles);
+  } catch (error) {
+    return res.status(500).send({ message: 'Failed to list roles', error: error.message });
+  }
+});
+
+/**
+ * POST /api/roles
+ * Create a new custom role (admin only)
+ */
+router.post('/', checkAdmin, async (req, res) => {
+  const { name, permissions } = req.body;
+  if (!name || typeof name !== 'string') {
+    return res.status(400).send({ message: 'Role name is required' });
+  }
+  if (SystemRoles[name.toUpperCase()]) {
+    return res.status(400).send({ message: 'Cannot create a role with a system role name' });
+  }
+  try {
+    const role = await createRole(name, permissions || {});
+    res.status(201).send(role);
+  } catch (error) {
+    return res.status(500).send({ message: 'Failed to create role', error: error.message });
+  }
+});
+
+/**
+ * DELETE /api/roles/:roleName
+ * Delete a custom role by name (admin only)
+ */
+router.delete('/:roleName', checkAdmin, async (req, res) => {
+  const { roleName } = req.params;
+  if (SystemRoles[roleName.toUpperCase()]) {
+    return res.status(400).send({ message: 'Cannot delete a system role' });
+  }
+  try {
+    await deleteRoleByName(roleName);
+    res.status(200).send({ message: 'Role deleted successfully' });
+  } catch (error) {
+    return res.status(500).send({ message: 'Failed to delete role', error: error.message });
+  }
+});
 
 module.exports = router;

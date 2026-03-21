@@ -2,6 +2,7 @@ const accessPermissions = require('./accessPermissions');
 const assistants = require('./assistants');
 const categories = require('./categories');
 const adminAuth = require('./admin/auth');
+const { adminUsersRouter: adminUsers, adminConfigRouter: adminConfig } = require('@librechat/api');
 const endpoints = require('./endpoints');
 const staticRoute = require('./static');
 const messages = require('./messages');
@@ -31,6 +32,8 @@ module.exports = {
   mcp,
   auth,
   adminAuth,
+  adminUsers,
+  adminConfig,
   keys,
   apiKeys,
   user,

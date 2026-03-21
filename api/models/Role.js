@@ -296,9 +296,62 @@ const migrateRoleSchema = async function (roleName) {
   }
 };
 
+/**
+ * Create a new custom role.
+ *
+ * @param {string} name - The name of the role to create.
+ * @param {object} [permissions] - Optional permissions map.
+ * @returns {Promise<IRole>} Created role document.
+ */
+const createRole = async function (name, permissions = {}) {
+  const cache = getLogStores(CacheKeys.ROLES);
+  try {
+    const role = await new Role({ name, permissions }).save();
+    await cache.set(name, role.toObject());
+    return role.toObject();
+  } catch (error) {
+    throw new Error(`Failed to create role: ${error.message}`);
+  }
+};
+
+/**
+ * List all roles.
+ *
+ * @returns {Promise<IRole[]>} All role documents.
+ */
+const listAllRoles = async function () {
+  try {
+    return await Role.find({}).select('-__v').lean().exec();
+  } catch (error) {
+    throw new Error(`Failed to list roles: ${error.message}`);
+  }
+};
+
+/**
+ * Delete a role by name. System roles (ADMIN, USER) cannot be deleted.
+ *
+ * @param {string} roleName - The name of the role to delete.
+ * @returns {Promise<void>}
+ */
+const deleteRoleByName = async function (roleName) {
+  if (SystemRoles[roleName]) {
+    throw new Error(`Cannot delete system role: ${roleName}`);
+  }
+  const cache = getLogStores(CacheKeys.ROLES);
+  try {
+    await Role.deleteOne({ name: roleName }).exec();
+    await cache.delete(roleName);
+  } catch (error) {
+    throw new Error(`Failed to delete role: ${error.message}`);
+  }
+};
+
 module.exports = {
   getRoleByName,
   updateRoleByName,
   migrateRoleSchema,
   updateAccessPermissions,
+  createRole,
+  listAllRoles,
+  deleteRoleByName,
 };

@@ -27,6 +27,8 @@ export * from './crypto';
 export * from './flow/manager';
 /* Middleware */
 export * from './middleware';
+/* Admin Routes */
+export * from './routes/admin';
 /* Memory */
 export * from './memory';
 /* Agents */

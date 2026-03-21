@@ -1085,3 +1085,60 @@ export interface ActiveJobsResponse {
 export const getActiveJobs = (): Promise<ActiveJobsResponse> => {
   return request.get(endpoints.activeJobs());
 };
+
+/* Admin — Roles */
+export function listRoles(): Promise<r.TRole[]> {
+  return request.get(endpoints.adminRoles());
+}
+
+export function createRole(payload: { name: string; permissions?: Record<string, Record<string, boolean>> }): Promise<r.TRole> {
+  return request.post(endpoints.adminRoles(), payload);
+}
+
+export function deleteRole(name: string): Promise<void> {
+  return request.delete(endpoints.adminRoleByName(name));
+}
+
+/* Admin — Users */
+export function listAdminUsers(params?: q.TAdminUsersParams): Promise<q.TAdminUsersResponse> {
+  const query = params
+    ? `?${new URLSearchParams(
+        Object.fromEntries(
+          Object.entries(params)
+            .filter(([, v]) => v !== undefined && v !== null)
+            .map(([k, v]) => [k, String(v)]),
+        ),
+      ).toString()}`
+    : '';
+  return request.get(`${endpoints.adminUsers()}${query}`);
+}
+
+export function updateAdminUser(userId: string, updates: q.TAdminUserUpdate): Promise<q.TAdminUser> {
+  return request.patch(endpoints.adminUserById(userId), updates);
+}
+
+export function banUser(userId: string, payload?: q.TAdminBanPayload): Promise<void> {
+  return request.post(endpoints.adminUserBan(userId), payload ?? {});
+}
+
+export function unbanUser(userId: string): Promise<void> {
+  return request.delete(endpoints.adminUserBan(userId));
+}
+
+/* Admin — Balance */
+export function getAdminUserBalance(userId: string): Promise<q.TAdminBalance> {
+  return request.get(endpoints.adminUserBalance(userId));
+}
+
+export function updateAdminUserBalance(userId: string, updates: q.TAdminBalanceUpdate): Promise<q.TAdminBalance> {
+  return request.patch(endpoints.adminUserBalance(userId), updates);
+}
+
+/* Admin — Config */
+export function getAdminConfig(): Promise<{ yaml: string }> {
+  return request.get(endpoints.adminConfig());
+}
+
+export function updateAdminConfig(yaml: string): Promise<{ message: string }> {
+  return request.put(endpoints.adminConfig(), { yaml });
+}

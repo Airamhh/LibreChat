@@ -206,3 +206,56 @@ export type GraphTokenResponse = {
   expires_in: number;
   scope: string;
 };
+
+/* Admin */
+export type TAdminUser = {
+  _id: string;
+  name?: string;
+  username?: string;
+  email: string;
+  emailVerified: boolean;
+  avatar?: string;
+  provider: string;
+  role?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type TAdminUsersParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+};
+
+export type TAdminUsersResponse = {
+  users: TAdminUser[];
+  total: number;
+  page: number;
+  pages: number;
+};
+
+export type TAdminUserUpdate = {
+  name?: string;
+  email?: string;
+  role?: string;
+};
+
+export type TAdminBanPayload = {
+  duration?: number;
+};
+
+export type TAdminBalance = {
+  tokenCredits: number;
+  autoRefillEnabled: boolean;
+  refillIntervalValue: number;
+  refillIntervalUnit: 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
+  lastRefill?: string;
+  refillAmount: number;
+};
+
+export type TAdminBalanceUpdate = Partial<TAdminBalance>;
+
+export type TCustomRole = {
+  name: string;
+  permissions: Record<string, Record<string, boolean>>;
+};
