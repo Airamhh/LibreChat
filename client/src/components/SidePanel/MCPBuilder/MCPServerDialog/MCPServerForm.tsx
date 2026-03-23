@@ -1,8 +1,10 @@
 import { FormProvider } from 'react-hook-form';
 import type { useMCPServerForm } from './hooks/useMCPServerForm';
+import CustomUserVarsDefinitionSection from './sections/CustomUserVarsDefinitionSection';
 import ConnectionSection from './sections/ConnectionSection';
 import BasicInfoSection from './sections/BasicInfoSection';
 import TransportSection from './sections/TransportSection';
+import HeadersSection from './sections/HeadersSection';
 import TrustSection from './sections/TrustSection';
 import AuthSection from './sections/AuthSection';
 
@@ -22,7 +24,11 @@ export default function MCPServerForm({ formHook }: MCPServerFormProps) {
 
         <TransportSection />
 
+        <HeadersSection />
+
         <AuthSection isEditMode={isEditMode} serverName={server?.serverName} />
+
+        <CustomUserVarsDefinitionSection />
 
         <TrustSection />
       </div>

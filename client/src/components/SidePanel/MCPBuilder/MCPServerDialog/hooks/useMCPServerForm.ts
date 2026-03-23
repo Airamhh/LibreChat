@@ -40,6 +40,17 @@ export interface AuthConfig {
   server_id?: string;
 }
 
+export interface HeaderEntry {
+  key: string;
+  value: string;
+}
+
+export interface CustomUserVarEntry {
+  key: string;
+  title: string;
+  description: string;
+}
+
 // Form data interface
 export interface MCPServerFormData {
   title: string;
@@ -49,6 +60,8 @@ export interface MCPServerFormData {
   type: 'streamable-http' | 'sse';
   auth: AuthConfig;
   trust: boolean;
+  headers: HeaderEntry[];
+  customUserVars: CustomUserVarEntry[];
 }
 
 interface UseMCPServerFormProps {
@@ -85,6 +98,10 @@ export function useMCPServerForm({ server, onSuccess, onClose }: UseMCPServerFor
 
       const apiKeyConfig = 'apiKey' in server.config ? server.config.apiKey : undefined;
 
+      const headersConfig =
+        'headers' in server.config && server.config.headers ? server.config.headers : {};
+      const customUserVarsConfig = server.config.customUserVars ?? {};
+
       return {
         title: server.config.title || '',
         description: server.config.description || '',
@@ -107,6 +124,12 @@ export function useMCPServerForm({ server, onSuccess, onClose }: UseMCPServerFor
           server_id: server.serverName,
         },
         trust: true, // Pre-checked for existing servers
+        headers: Object.entries(headersConfig).map(([key, value]) => ({ key, value })),
+        customUserVars: Object.entries(customUserVarsConfig).map(([key, cfg]) => ({
+          key,
+          title: cfg.title,
+          description: cfg.description,
+        })),
       };
     }
 
@@ -129,6 +152,8 @@ export function useMCPServerForm({ server, onSuccess, onClose }: UseMCPServerFor
         oauth_scope: '',
       },
       trust: false,
+      headers: [],
+      customUserVars: [],
     };
   }, [server]);
 
@@ -182,6 +207,39 @@ export function useMCPServerForm({ server, onSuccess, onClose }: UseMCPServerFor
         ...(formData.description && { description: formData.description }),
         ...(formData.icon && { iconPath: formData.icon }),
       };
+
+      // Add HTTP headers
+      if (formData.headers.length > 0) {
+        const headersMap: Record<string, string> = {};
+        for (const { key, value } of formData.headers) {
+          const trimmedKey = key.trim();
+          const trimmedValue = value.trim();
+          if (trimmedKey && trimmedValue) {
+            headersMap[trimmedKey] = trimmedValue;
+          }
+        }
+        if (Object.keys(headersMap).length > 0) {
+          config.headers = headersMap;
+        }
+      }
+
+      // Add custom user variable definitions
+      if (formData.customUserVars.length > 0) {
+        const customUserVarsMap: Record<string, { title: string; description: string }> = {};
+        for (const { key, title, description } of formData.customUserVars) {
+          const trimmedKey = key.trim();
+          const trimmedTitle = title.trim();
+          if (trimmedKey && trimmedTitle) {
+            customUserVarsMap[trimmedKey] = {
+              title: trimmedTitle,
+              description: description.trim(),
+            };
+          }
+        }
+        if (Object.keys(customUserVarsMap).length > 0) {
+          config.customUserVars = customUserVarsMap;
+        }
+      }
 
       // Add OAuth configuration
       if (

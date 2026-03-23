@@ -219,7 +219,6 @@ const omitServerManagedFields = <T extends z.ZodObject<z.ZodRawShape>>(schema: T
     chatMenu: true,
     serverInstructions: true,
     requiresOAuth: true,
-    customUserVars: true,
     oauth_headers: true,
   });
 
@@ -242,8 +241,8 @@ const userUrlSchema = (protocolCheck: (val: string) => boolean, message: string)
 
 /**
  * MCP Server configuration that comes from UI/API input only.
- * Omits server-managed fields like startup, timeout, customUserVars, etc.
- * Allows: title, description, url, iconPath, oauth (user credentials)
+ * Omits server-managed fields like startup, timeout, oauth_headers, etc.
+ * Allows: title, description, url, iconPath, headers, customUserVars, oauth (user credentials)
  *
  * SECURITY: Stdio transport is intentionally excluded from user input.
  * Stdio allows arbitrary command execution and should only be configured
