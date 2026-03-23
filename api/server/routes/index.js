@@ -1,9 +1,17 @@
+const express = require('express');
 const accessPermissions = require('./accessPermissions');
 const assistants = require('./assistants');
 const categories = require('./categories');
 const adminAuth = require('./admin/auth');
-const { adminUsersRouter: adminUsers, adminConfigRouter: adminConfig } = require('@librechat/api');
+const { adminUsersRouter, adminConfigRouter } = require('@librechat/api');
+const { requireJwtAuth } = require('~/server/middleware');
 const endpoints = require('./endpoints');
+
+const adminUsers = express.Router();
+adminUsers.use(requireJwtAuth, adminUsersRouter);
+
+const adminConfig = express.Router();
+adminConfig.use(requireJwtAuth, adminConfigRouter);
 const staticRoute = require('./static');
 const messages = require('./messages');
 const memories = require('./memories');

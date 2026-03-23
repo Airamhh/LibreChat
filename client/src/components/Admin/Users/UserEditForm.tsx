@@ -46,6 +46,9 @@ export default function UserEditForm({ user, onClose }: UserEditFormProps) {
   };
 
   const handleUnban = async () => {
+    if (!window.confirm(localize('com_admin_confirm_unban_user'))) {
+      return;
+    }
     try {
       await unbanUser.mutateAsync(user._id);
       onClose();

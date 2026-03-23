@@ -1099,6 +1099,10 @@ export function deleteRole(name: string): Promise<void> {
   return request.delete(endpoints.adminRoleByName(name));
 }
 
+export function renameRole(name: string, newName: string): Promise<r.TRole> {
+  return request.patch(endpoints.adminRoleByName(name), { name: newName });
+}
+
 /* Admin — Users */
 export function listAdminUsers(params?: q.TAdminUsersParams): Promise<q.TAdminUsersResponse> {
   const query = params

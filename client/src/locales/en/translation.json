@@ -1573,5 +1573,19 @@
   "com_admin_perm_opt_out": "Opt Out",
   "com_admin_perm_view_users": "View Users",
   "com_admin_perm_view_groups": "View Groups",
-  "com_admin_perm_view_roles": "View Roles"
+  "com_admin_perm_view_roles": "View Roles",
+  "com_admin_confirm_unban_user": "Are you sure you want to unban this user?",
+  "com_admin_rename_role": "Rename role",
+  "com_admin_system_role": "System role (locked)",
+  "com_admin_locked": "Locked",
+  "com_admin_config": "Config",
+  "com_admin_no_roles": "No roles found",
+  "com_admin_no_users": "No users found",
+  "com_admin_back_to_chat": "Back to chat",
+  "com_admin_create_role": "Create role",
+  "com_admin_rename": "Rename",
+  "com_admin_cancel_rename": "Cancel rename",
+  "com_admin_section_features": "Features",
+  "com_admin_section_content": "Content",
+  "com_admin_section_advanced": "Advanced"
 }

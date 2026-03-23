@@ -37,6 +37,19 @@ export const useDeleteRoleMutation = (): UseMutationResult<void, TError, string>
   });
 };
 
+export const useRenameRoleMutation = (): UseMutationResult<
+  TRole,
+  TError,
+  { name: string; newName: string }
+> => {
+  const queryClient = useQueryClient();
+  return useMutation(({ name, newName }) => dataService.renameRole(name, newName), {
+    onSuccess: () => {
+      queryClient.invalidateQueries([QueryKeys.adminRoles]);
+    },
+  });
+};
+
 export const useUpdateAdminUserMutation = (): UseMutationResult<
   TAdminUser,
   TError,

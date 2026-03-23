@@ -346,6 +346,28 @@ const deleteRoleByName = async function (roleName) {
   }
 };
 
+const renameRoleByName = async function (oldName, newName) {
+  if (SystemRoles[oldName.toUpperCase()]) {
+    throw new Error(`Cannot rename system role: ${oldName}`);
+  }
+  const cache = getLogStores(CacheKeys.ROLES);
+  try {
+    const role = await Role.findOneAndUpdate(
+      { name: oldName },
+      { $set: { name: newName } },
+      { new: true, lean: true },
+    ).exec();
+    if (!role) {
+      throw new Error(`Role not found: ${oldName}`);
+    }
+    await cache.delete(oldName);
+    await cache.set(newName, role);
+    return role;
+  } catch (error) {
+    throw new Error(`Failed to rename role: ${error.message}`);
+  }
+};
+
 module.exports = {
   getRoleByName,
   updateRoleByName,
@@ -354,4 +376,5 @@ module.exports = {
   createRole,
   listAllRoles,
   deleteRoleByName,
+  renameRoleByName,
 };

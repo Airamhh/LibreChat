@@ -12,7 +12,7 @@ const {
   remoteAgentsPermissionsSchema,
 } = require('librechat-data-provider');
 const { checkAdmin, requireJwtAuth } = require('~/server/middleware');
-const { updateRoleByName, getRoleByName, createRole, listAllRoles, deleteRoleByName } = require('~/models/Role');
+const { updateRoleByName, getRoleByName, createRole, listAllRoles, deleteRoleByName, renameRoleByName } = require('~/models/Role');
 
 const router = express.Router();
 router.use(requireJwtAuth);
@@ -219,6 +219,27 @@ router.delete('/:roleName', checkAdmin, async (req, res) => {
     res.status(200).send({ message: 'Role deleted successfully' });
   } catch (error) {
     return res.status(500).send({ message: 'Failed to delete role', error: error.message });
+  }
+});
+
+/**
+ * PATCH /api/roles/:roleName
+ * Rename a custom role (admin only)
+ */
+router.patch('/:roleName', checkAdmin, async (req, res) => {
+  const { roleName } = req.params;
+  const { name: newName } = req.body;
+  if (SystemRoles[roleName.toUpperCase()]) {
+    return res.status(400).send({ message: 'Cannot rename a system role' });
+  }
+  if (!newName || typeof newName !== 'string' || !newName.trim()) {
+    return res.status(400).send({ message: 'New role name is required' });
+  }
+  try {
+    const role = await renameRoleByName(roleName, newName.trim());
+    res.status(200).send(role);
+  } catch (error) {
+    return res.status(500).send({ message: 'Failed to rename role', error: error.message });
   }
 });
 

@@ -43,6 +43,39 @@ const permissionLabels: Record<string, string> = {
   [Permissions.VIEW_ROLES]: 'com_admin_perm_view_roles',
 };
 
+/** Logical sections grouping permission types */
+const SECTIONS: Array<{ labelKey: string; types: PermissionTypes[] }> = [
+  {
+    labelKey: 'com_admin_section_features',
+    types: [
+      PermissionTypes.MULTI_CONVO,
+      PermissionTypes.TEMPORARY_CHAT,
+      PermissionTypes.BOOKMARKS,
+      PermissionTypes.WEB_SEARCH,
+      PermissionTypes.RUN_CODE,
+      PermissionTypes.FILE_SEARCH,
+      PermissionTypes.FILE_CITATIONS,
+    ],
+  },
+  {
+    labelKey: 'com_admin_section_content',
+    types: [
+      PermissionTypes.PROMPTS,
+      PermissionTypes.AGENTS,
+      PermissionTypes.MEMORIES,
+      PermissionTypes.MARKETPLACE,
+      PermissionTypes.REMOTE_AGENTS,
+    ],
+  },
+  {
+    labelKey: 'com_admin_section_advanced',
+    types: [
+      PermissionTypes.MCP_SERVERS,
+      PermissionTypes.PEOPLE_PICKER,
+    ],
+  },
+];
+
 const permissionTypeToMutation: Record<string, string> = {
   [PermissionTypes.PROMPTS]: 'prompts',
   [PermissionTypes.AGENTS]: 'agents',
@@ -147,54 +180,71 @@ export default function PermissionsEditor({ roleName }: PermissionsEditorProps) 
     }
   };
 
+  const renderPermTypeCard = (permType: PermissionTypes) => {
+    const perms = localPerms[permType] ?? {};
+    const permKeys = Object.keys(perms);
+    if (permKeys.length === 0) {
+      return null;
+    }
+    return (
+      <div key={permType} className="rounded-lg border border-border-light bg-surface-primary p-3">
+        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-token-text-secondary">
+          {localize(permissionTypeLabels[permType] as Parameters<typeof localize>[0]) || permType}
+        </h4>
+        <div className="space-y-1.5">
+          {permKeys.map((perm) => (
+            <div key={perm} className="flex items-center justify-between gap-2">
+              <span className="text-xs text-token-text-secondary">
+                {localize(permissionLabels[perm] as Parameters<typeof localize>[0]) || perm}
+              </span>
+              <Switch
+                checked={!!perms[perm]}
+                onCheckedChange={(val) => handleToggle(permType, perm, val)}
+                aria-label={perm}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-token-text-primary">
-          {localize('com_admin_permissions_editor')} — {roleName}
-        </h2>
+        <span className="text-sm font-medium text-token-text-primary">{roleName}</span>
         <div className="flex items-center gap-2">
           {saveSuccess && (
-            <span className="text-sm text-green-500">{localize('com_ui_saved')}</span>
+            <span className="text-xs text-green-500">{localize('com_ui_saved')}</span>
           )}
-          {saveError && <span className="text-sm text-red-500">{saveError}</span>}
+          {saveError && <span className="text-xs text-red-500">{saveError}</span>}
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded bg-green-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+            className="rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
           >
             {saving ? localize('com_ui_saving') : localize('com_ui_save')}
           </button>
         </div>
       </div>
 
-      {Object.values(PermissionTypes).map((permType) => {
-        const perms = localPerms[permType] ?? {};
-        const permKeys = Object.keys(perms);
-
-        if (permKeys.length === 0) {
+      {SECTIONS.map((section) => {
+        const cards = section.types.reduce<React.ReactNode[]>((acc, permType) => {
+          const card = renderPermTypeCard(permType);
+          if (card != null) {
+            acc.push(card);
+          }
+          return acc;
+        }, []);
+        if (cards.length === 0) {
           return null;
         }
-
         return (
-          <div key={permType} className="rounded-lg border border-border-medium p-4">
-            <h3 className="mb-3 text-sm font-medium text-token-text-primary">
-              {localize(permissionTypeLabels[permType] as Parameters<typeof localize>[0]) || permType}
+          <div key={section.labelKey} className="space-y-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-token-text-tertiary">
+              {localize(section.labelKey as Parameters<typeof localize>[0])}
             </h3>
-            <div className="space-y-2">
-              {permKeys.map((perm) => (
-                <div key={perm} className="flex items-center justify-between">
-                  <span className="text-sm text-token-text-secondary">
-                    {localize(permissionLabels[perm] as Parameters<typeof localize>[0]) || perm}
-                  </span>
-                  <Switch
-                    checked={!!perms[perm]}
-                    onCheckedChange={(val) => handleToggle(permType, perm, val)}
-                    aria-label={perm}
-                  />
-                </div>
-              ))}
-            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{cards}</div>
           </div>
         );
       })}
