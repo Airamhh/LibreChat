@@ -223,6 +223,56 @@ describe('redactServerSecrets', () => {
     expect(redacted.customUserVars).toEqual(config.customUserVars);
   });
 
+  it('should preserve serverInstructions: true', () => {
+    const config: ParsedServerConfig = {
+      type: 'sse',
+      url: 'https://example.com/mcp',
+      serverInstructions: true,
+    };
+    const redacted = redactServerSecrets(config);
+    expect(redacted.serverInstructions).toBe(true);
+  });
+
+  it('should preserve serverInstructions as a custom string', () => {
+    const config: ParsedServerConfig = {
+      type: 'sse',
+      url: 'https://example.com/mcp',
+      serverInstructions: 'Always respond concisely.',
+    };
+    const redacted = redactServerSecrets(config);
+    expect(redacted.serverInstructions).toBe('Always respond concisely.');
+  });
+
+  it('should omit serverInstructions when not set', () => {
+    const config: ParsedServerConfig = {
+      type: 'sse',
+      url: 'https://example.com/mcp',
+    };
+    const redacted = redactServerSecrets(config);
+    expect(redacted.serverInstructions).toBeUndefined();
+    expect(Object.prototype.hasOwnProperty.call(redacted, 'serverInstructions')).toBe(false);
+  });
+
+  it('should preserve chatMenu: false', () => {
+    const config: ParsedServerConfig = {
+      type: 'sse',
+      url: 'https://example.com/mcp',
+      chatMenu: false,
+    };
+    const redacted = redactServerSecrets(config);
+    expect(redacted.chatMenu).toBe(false);
+  });
+
+  it('should omit chatMenu when not set', () => {
+    const config: ParsedServerConfig = {
+      type: 'sse',
+      url: 'https://example.com/mcp',
+    };
+    const redacted = redactServerSecrets(config);
+    expect(redacted.chatMenu).toBeUndefined();
+    expect(Object.prototype.hasOwnProperty.call(redacted, 'chatMenu')).toBe(false);
+  });
+
   it('should pass URLs through unchanged', () => {
     const config: ParsedServerConfig = {
       type: 'sse',
