@@ -9,9 +9,9 @@ export default function AdvancedSection() {
   const { control, register } = useFormContext<MCPServerFormData>();
 
   const serverInstructionsMode = useWatch<MCPServerFormData, 'serverInstructionsMode'>({
+    control,
     name: 'serverInstructionsMode',
-    defaultValue: 'none',
-  });
+  }) ?? 'none';
 
   const instructionOptions = useMemo(
     () => [

@@ -26,6 +26,7 @@ interface HeaderRowProps {
 function HeaderRow({ index, onRemove, availableVars }: HeaderRowProps) {
   const localize = useLocalize();
   const {
+    control,
     register,
     setValue,
     getValues,
@@ -35,6 +36,7 @@ function HeaderRow({ index, onRemove, availableVars }: HeaderRowProps) {
   const [showVarMenu, setShowVarMenu] = useState(false);
 
   const isSecret = useWatch<MCPServerFormData, `headers.${number}.isSecret`>({
+    control,
     name: `headers.${index}.isSecret`,
   });
 
@@ -190,9 +192,9 @@ export default function HeadersSection() {
   const { fields, append, remove } = useFieldArray({ control, name: 'headers' });
 
   const availableVars = useWatch<MCPServerFormData, 'customUserVars'>({
+    control,
     name: 'customUserVars',
-    defaultValue: [],
-  });
+  }) ?? [];
 
   const validVars = (availableVars ?? []).filter((v) => v.key.trim() && v.title.trim());
 
