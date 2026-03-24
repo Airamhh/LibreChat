@@ -103,6 +103,53 @@ function buildConfig(formData: MCPServerFormData): Record<string, unknown> {
   };
 }
 
+/** Mirrors the header-building logic from onSubmit. */
+function buildHeaders(
+  headers: MCPServerFormData['headers'],
+): { headers?: Record<string, string>; secretHeaderKeys?: string[] } {
+  if (headers.length === 0) {
+    return {};
+  }
+  const headersMap: Record<string, string> = {};
+  const secretHeaderKeysList: string[] = [];
+  for (const { key, value, isSecret } of headers) {
+    const trimmedKey = key.trim();
+    const trimmedValue = value.trim();
+    if (!trimmedKey) {
+      continue;
+    }
+    if (!trimmedValue && !isSecret) {
+      continue;
+    }
+    headersMap[trimmedKey] = trimmedValue;
+    if (isSecret) {
+      secretHeaderKeysList.push(trimmedKey);
+    }
+  }
+  if (Object.keys(headersMap).length === 0) {
+    return {};
+  }
+  return { headers: headersMap, secretHeaderKeys: secretHeaderKeysList };
+}
+
+/** Mirrors the customUserVars-building logic from onSubmit. */
+function buildCustomUserVars(
+  vars: MCPServerFormData['customUserVars'],
+): Record<string, { title: string; description: string }> | undefined {
+  if (vars.length === 0) {
+    return undefined;
+  }
+  const map: Record<string, { title: string; description: string }> = {};
+  for (const { key, title, description } of vars) {
+    const trimmedKey = key.trim();
+    const trimmedTitle = title.trim();
+    if (trimmedKey && trimmedTitle) {
+      map[trimmedKey] = { title: trimmedTitle, description: description.trim() };
+    }
+  }
+  return Object.keys(map).length > 0 ? map : undefined;
+}
+
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
@@ -388,5 +435,258 @@ describe('buildConfig – combined chatMenu and serverInstructions', () => {
     const config = buildConfig(formData);
     expect(config.chatMenu).toBeUndefined();
     expect(config.serverInstructions).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tests: deriveDefaultValues – headers round-trip
+// ---------------------------------------------------------------------------
+
+describe('deriveDefaultValues – headers', () => {
+  it('produces an empty array when no headers are present', () => {
+    const server = makeServer();
+    const defaults = deriveDefaultValues(server);
+    expect(defaults.headers).toEqual([]);
+  });
+
+  it('maps each header entry to { key, value, isSecret: false } by default', () => {
+    const server = makeServer({
+      headers: { 'X-Custom': 'my-value', 'X-Other': 'other' } as unknown as MCPOptions['headers'],
+      secretHeaderKeys: [] as unknown as MCPOptions['secretHeaderKeys'],
+    });
+    const defaults = deriveDefaultValues(server);
+    expect(defaults.headers).toEqual(
+      expect.arrayContaining([
+        { key: 'X-Custom', value: 'my-value', isSecret: false },
+        { key: 'X-Other', value: 'other', isSecret: false },
+      ]),
+    );
+    expect(defaults.headers).toHaveLength(2);
+  });
+
+  it('marks a header as isSecret: true when its key is in secretHeaderKeys', () => {
+    const server = makeServer({
+      headers: { Authorization: '', 'X-Public': 'pub' } as unknown as MCPOptions['headers'],
+      secretHeaderKeys: ['Authorization'] as unknown as MCPOptions['secretHeaderKeys'],
+    });
+    const defaults = deriveDefaultValues(server);
+    const authHeader = defaults.headers.find((h) => h.key === 'Authorization');
+    const pubHeader = defaults.headers.find((h) => h.key === 'X-Public');
+    expect(authHeader?.isSecret).toBe(true);
+    expect(pubHeader?.isSecret).toBe(false);
+  });
+
+  it('marks multiple headers as secret when all are in secretHeaderKeys', () => {
+    const server = makeServer({
+      headers: { 'X-Secret-A': '', 'X-Secret-B': '' } as unknown as MCPOptions['headers'],
+      secretHeaderKeys: ['X-Secret-A', 'X-Secret-B'] as unknown as MCPOptions['secretHeaderKeys'],
+    });
+    const defaults = deriveDefaultValues(server);
+    expect(defaults.headers.every((h) => h.isSecret)).toBe(true);
+  });
+
+  it('treats secretHeaderKeys as empty set when field is absent (YAML server)', () => {
+    const server = makeServer({
+      headers: { 'X-Custom': 'value' } as unknown as MCPOptions['headers'],
+      // secretHeaderKeys deliberately omitted
+    });
+    const defaults = deriveDefaultValues(server);
+    const entry = defaults.headers.find((h) => h.key === 'X-Custom');
+    expect(entry?.isSecret).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tests: deriveDefaultValues – customUserVars round-trip
+// ---------------------------------------------------------------------------
+
+describe('deriveDefaultValues – customUserVars', () => {
+  it('produces an empty array when customUserVars is absent', () => {
+    const server = makeServer();
+    const defaults = deriveDefaultValues(server);
+    expect(defaults.customUserVars).toEqual([]);
+  });
+
+  it('maps each customUserVars entry to { key, title, description }', () => {
+    const server = makeServer({
+      customUserVars: {
+        API_KEY: { title: 'API Key', description: 'Your API key' },
+        INDEX: { title: 'Index Name', description: '' },
+      },
+    });
+    const defaults = deriveDefaultValues(server);
+    expect(defaults.customUserVars).toEqual(
+      expect.arrayContaining([
+        { key: 'API_KEY', title: 'API Key', description: 'Your API key' },
+        { key: 'INDEX', title: 'Index Name', description: '' },
+      ]),
+    );
+    expect(defaults.customUserVars).toHaveLength(2);
+  });
+
+  it('preserves an empty description string', () => {
+    const server = makeServer({
+      customUserVars: { TOKEN: { title: 'Token', description: '' } },
+    });
+    const defaults = deriveDefaultValues(server);
+    expect(defaults.customUserVars[0].description).toBe('');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tests: buildHeaders
+// ---------------------------------------------------------------------------
+
+describe('buildHeaders', () => {
+  it('returns empty object when headers array is empty', () => {
+    expect(buildHeaders([])).toEqual({});
+  });
+
+  it('builds a plain headers map for non-secret entries', () => {
+    const result = buildHeaders([
+      { key: 'X-Custom', value: 'my-value', isSecret: false },
+      { key: 'X-Other', value: 'other-value', isSecret: false },
+    ]);
+    expect(result.headers).toEqual({ 'X-Custom': 'my-value', 'X-Other': 'other-value' });
+    expect(result.secretHeaderKeys).toEqual([]);
+  });
+
+  it('includes the header key in secretHeaderKeys for secret entries', () => {
+    const result = buildHeaders([{ key: 'Authorization', value: 'Bearer token', isSecret: true }]);
+    expect(result.headers).toEqual({ Authorization: 'Bearer token' });
+    expect(result.secretHeaderKeys).toEqual(['Authorization']);
+  });
+
+  it('keeps secret headers with empty value (preserved masked value)', () => {
+    const result = buildHeaders([{ key: 'X-Secret', value: '', isSecret: true }]);
+    expect(result.headers).toEqual({ 'X-Secret': '' });
+    expect(result.secretHeaderKeys).toEqual(['X-Secret']);
+  });
+
+  it('skips non-secret headers with blank values', () => {
+    const result = buildHeaders([
+      { key: 'X-Empty', value: '   ', isSecret: false },
+      { key: 'X-Present', value: 'ok', isSecret: false },
+    ]);
+    expect(result.headers).toEqual({ 'X-Present': 'ok' });
+    expect(result.secretHeaderKeys).toEqual([]);
+  });
+
+  it('skips entries with blank keys', () => {
+    const result = buildHeaders([
+      { key: '  ', value: 'some-value', isSecret: false },
+      { key: 'X-Real', value: 'val', isSecret: false },
+    ]);
+    expect(result.headers).toEqual({ 'X-Real': 'val' });
+  });
+
+  it('trims whitespace from keys and values', () => {
+    const result = buildHeaders([{ key: '  X-Padded  ', value: '  padded  ', isSecret: false }]);
+    expect(result.headers).toEqual({ 'X-Padded': 'padded' });
+  });
+
+  it('returns empty object when all entries have blank keys', () => {
+    const result = buildHeaders([{ key: '', value: 'value', isSecret: false }]);
+    expect(result).toEqual({});
+  });
+
+  it('returns empty object when all non-secret entries have blank values', () => {
+    const result = buildHeaders([{ key: 'X-Empty', value: '', isSecret: false }]);
+    expect(result).toEqual({});
+  });
+
+  it('mixes secret and non-secret headers, builds correct secretHeaderKeys', () => {
+    const result = buildHeaders([
+      { key: 'X-Api-Key', value: 'secret-value', isSecret: true },
+      { key: 'X-Index', value: 'my-index', isSecret: false },
+      { key: 'X-Token', value: 'tok', isSecret: true },
+    ]);
+    expect(result.headers).toEqual({
+      'X-Api-Key': 'secret-value',
+      'X-Index': 'my-index',
+      'X-Token': 'tok',
+    });
+    expect(result.secretHeaderKeys).toEqual(['X-Api-Key', 'X-Token']);
+  });
+
+  it('always emits secretHeaderKeys (even as empty array) when headers are present', () => {
+    const result = buildHeaders([{ key: 'X-Public', value: 'pub', isSecret: false }]);
+    expect(result.secretHeaderKeys).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tests: buildCustomUserVars
+// ---------------------------------------------------------------------------
+
+describe('buildCustomUserVars', () => {
+  it('returns undefined when array is empty', () => {
+    expect(buildCustomUserVars([])).toBeUndefined();
+  });
+
+  it('builds a map with title and description', () => {
+    const result = buildCustomUserVars([
+      { key: 'API_KEY', title: 'API Key', description: 'Your API key' },
+    ]);
+    expect(result).toEqual({ API_KEY: { title: 'API Key', description: 'Your API key' } });
+  });
+
+  it('preserves empty description string', () => {
+    const result = buildCustomUserVars([{ key: 'TOKEN', title: 'Token', description: '' }]);
+    expect(result).toEqual({ TOKEN: { title: 'Token', description: '' } });
+  });
+
+  it('trims whitespace from key, title, and description', () => {
+    const result = buildCustomUserVars([
+      { key: '  MY_VAR  ', title: '  My Var  ', description: '  desc  ' },
+    ]);
+    expect(result).toEqual({ MY_VAR: { title: 'My Var', description: 'desc' } });
+  });
+
+  it('skips entries with blank keys', () => {
+    const result = buildCustomUserVars([
+      { key: '', title: 'Should be skipped', description: '' },
+      { key: 'VALID', title: 'Valid Var', description: '' },
+    ]);
+    expect(result).toEqual({ VALID: { title: 'Valid Var', description: '' } });
+  });
+
+  it('skips entries with blank titles', () => {
+    const result = buildCustomUserVars([
+      { key: 'MY_KEY', title: '', description: 'some desc' },
+      { key: 'OTHER', title: 'Other', description: '' },
+    ]);
+    expect(result).toEqual({ OTHER: { title: 'Other', description: '' } });
+  });
+
+  it('skips entries with whitespace-only key', () => {
+    const result = buildCustomUserVars([{ key: '   ', title: 'Title', description: '' }]);
+    expect(result).toBeUndefined();
+  });
+
+  it('skips entries with whitespace-only title', () => {
+    const result = buildCustomUserVars([{ key: 'MY_KEY', title: '   ', description: '' }]);
+    expect(result).toBeUndefined();
+  });
+
+  it('returns undefined when all entries are invalid', () => {
+    const result = buildCustomUserVars([
+      { key: '', title: '', description: '' },
+      { key: '  ', title: '  ', description: '' },
+    ]);
+    expect(result).toBeUndefined();
+  });
+
+  it('handles multiple valid entries', () => {
+    const result = buildCustomUserVars([
+      { key: 'API_KEY', title: 'API Key', description: 'Key for auth' },
+      { key: 'INDEX', title: 'Index Name', description: '' },
+      { key: 'TOP_K', title: 'Top K', description: 'Number of results' },
+    ]);
+    expect(result).toEqual({
+      API_KEY: { title: 'API Key', description: 'Key for auth' },
+      INDEX: { title: 'Index Name', description: '' },
+      TOP_K: { title: 'Top K', description: 'Number of results' },
+    });
   });
 });
