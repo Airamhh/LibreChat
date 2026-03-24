@@ -158,6 +158,8 @@ export type ParsedServerConfig = MCPOptions & {
   consumeOnly?: boolean;
   /** True when inspection failed at startup; the server is known but not fully initialized */
   inspectionFailed?: boolean;
+  /** Keys in `headers` whose values are encrypted at rest and masked in API responses */
+  secretHeaderKeys?: string[];
 };
 
 export type AddServerResult = {

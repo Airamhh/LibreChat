@@ -163,6 +163,8 @@ export const WebSocketOptionsSchema = BaseOptionsSchema.extend({
 export const SSEOptionsSchema = BaseOptionsSchema.extend({
   type: z.literal('sse').optional(),
   headers: z.record(z.string(), z.string()).optional(),
+  /** Keys in `headers` whose values are encrypted at rest and masked in API responses */
+  secretHeaderKeys: z.array(z.string()).optional(),
   url: z
     .string()
     .transform((val: string) => extractEnvVariable(val))
@@ -181,6 +183,8 @@ export const SSEOptionsSchema = BaseOptionsSchema.extend({
 export const StreamableHTTPOptionsSchema = BaseOptionsSchema.extend({
   type: z.union([z.literal('streamable-http'), z.literal('http')]),
   headers: z.record(z.string(), z.string()).optional(),
+  /** Keys in `headers` whose values are encrypted at rest and masked in API responses */
+  secretHeaderKeys: z.array(z.string()).optional(),
   url: z
     .string()
     .transform((val: string) => extractEnvVariable(val))

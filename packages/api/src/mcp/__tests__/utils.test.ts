@@ -83,7 +83,7 @@ describe('redactServerSecrets', () => {
     expect(redacted.oauth?.client_id).toBe('cid');
   });
 
-  it('should exclude headers from SSE configs', () => {
+  it('should exclude headers from YAML/non-UI configs (secretHeaderKeys undefined)', () => {
     const config: ParsedServerConfig = {
       type: 'sse',
       url: 'https://example.com/mcp',
@@ -96,6 +96,53 @@ describe('redactServerSecrets', () => {
     const redacted = redactServerSecrets(config);
     expect((redacted as Record<string, unknown>).headers).toBeUndefined();
     expect(redacted.title).toBe('SSE Server');
+  });
+
+  it('should expose non-secret headers for UI-created servers (secretHeaderKeys defined)', () => {
+    const config: ParsedServerConfig = {
+      type: 'sse',
+      url: 'https://example.com/mcp',
+      title: 'SSE Server',
+      secretHeaderKeys: [],
+    };
+    (config as ParsedServerConfig & { headers: Record<string, string> }).headers = {
+      'X-Index-Name': 'my-index',
+      'X-Top': '{{INDEX_TOP}}',
+    };
+    const redacted = redactServerSecrets(config);
+    expect((redacted as Record<string, unknown> & { headers: Record<string, string> }).headers)
+      .toEqual({ 'X-Index-Name': 'my-index', 'X-Top': '{{INDEX_TOP}}' });
+    expect(redacted.secretHeaderKeys).toEqual([]);
+  });
+
+  it('should mask secret header values as empty string and expose non-secret values', () => {
+    const config: ParsedServerConfig = {
+      type: 'streamable-http',
+      url: 'https://example.com/mcp',
+      secretHeaderKeys: ['X-Secret-Token'],
+    };
+    (config as ParsedServerConfig & { headers: Record<string, string> }).headers = {
+      'X-Secret-Token': 'super-secret-value',
+      'X-Public-Header': 'public-value',
+    };
+    const redacted = redactServerSecrets(config);
+    const headers = (redacted as Record<string, unknown> & { headers: Record<string, string> }).headers;
+    expect(headers['X-Secret-Token']).toBe('');
+    expect(headers['X-Public-Header']).toBe('public-value');
+    expect(redacted.secretHeaderKeys).toEqual(['X-Secret-Token']);
+  });
+
+  it('should expose secretHeaderKeys: [] for UI servers with all non-secret headers', () => {
+    const config: ParsedServerConfig = {
+      type: 'sse',
+      url: 'https://example.com/mcp',
+      secretHeaderKeys: [],
+    };
+    (config as ParsedServerConfig & { headers: Record<string, string> }).headers = {
+      'X-Custom': 'value',
+    };
+    const redacted = redactServerSecrets(config);
+    expect(redacted.secretHeaderKeys).toEqual([]);
   });
 
   it('should exclude env from stdio configs', () => {

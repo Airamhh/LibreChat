@@ -43,6 +43,7 @@ export interface AuthConfig {
 export interface HeaderEntry {
   key: string;
   value: string;
+  isSecret: boolean;
 }
 
 export interface CustomUserVarEntry {
@@ -101,6 +102,9 @@ export function useMCPServerForm({ server, onSuccess, onClose }: UseMCPServerFor
       const headersConfig =
         'headers' in server.config && server.config.headers ? server.config.headers : {};
       const customUserVarsConfig = server.config.customUserVars ?? {};
+      const rawSecretHeaderKeys =
+        'secretHeaderKeys' in server.config ? server.config.secretHeaderKeys : undefined;
+      const secretHeaderKeysSet = new Set(rawSecretHeaderKeys ?? []);
 
       return {
         title: server.config.title || '',
@@ -124,7 +128,11 @@ export function useMCPServerForm({ server, onSuccess, onClose }: UseMCPServerFor
           server_id: server.serverName,
         },
         trust: true, // Pre-checked for existing servers
-        headers: Object.entries(headersConfig).map(([key, value]) => ({ key, value })),
+        headers: Object.entries(headersConfig).map(([key, value]) => ({
+          key,
+          value,
+          isSecret: secretHeaderKeysSet.has(key),
+        })),
         customUserVars: Object.entries(customUserVarsConfig).map(([key, cfg]) => ({
           key,
           title: cfg.title,
@@ -152,8 +160,7 @@ export function useMCPServerForm({ server, onSuccess, onClose }: UseMCPServerFor
         oauth_scope: '',
       },
       trust: false,
-      headers: [],
-      customUserVars: [],
+      headers: [],      customUserVars: [],
     };
   }, [server]);
 
@@ -211,15 +218,26 @@ export function useMCPServerForm({ server, onSuccess, onClose }: UseMCPServerFor
       // Add HTTP headers
       if (formData.headers.length > 0) {
         const headersMap: Record<string, string> = {};
-        for (const { key, value } of formData.headers) {
+        const secretHeaderKeysList: string[] = [];
+        for (const { key, value, isSecret } of formData.headers) {
           const trimmedKey = key.trim();
           const trimmedValue = value.trim();
-          if (trimmedKey && trimmedValue) {
-            headersMap[trimmedKey] = trimmedValue;
+          if (!trimmedKey) {
+            continue;
+          }
+          // For non-secret headers, skip blank values (no point sending an empty header)
+          if (!trimmedValue && !isSecret) {
+            continue;
+          }
+          headersMap[trimmedKey] = trimmedValue;
+          if (isSecret) {
+            secretHeaderKeysList.push(trimmedKey);
           }
         }
         if (Object.keys(headersMap).length > 0) {
           config.headers = headersMap;
+          // Always include secretHeaderKeys (even empty) to signal this is a UI-managed server
+          config.secretHeaderKeys = secretHeaderKeysList;
         }
       }
 

@@ -50,6 +50,22 @@ export function redactServerSecrets(config: ParsedServerConfig): Partial<ParsedS
     safe.oauth = safeOAuth;
   }
 
+  // Expose headers for UI-created servers (secretHeaderKeys is defined, even if empty).
+  // YAML-configured servers never set secretHeaderKeys, so their headers stay hidden.
+  if (config.secretHeaderKeys !== undefined) {
+    const secretKeys = new Set(config.secretHeaderKeys);
+    const rawHeaders = (config as ParsedServerConfig & { headers?: Record<string, string> })
+      .headers;
+    if (rawHeaders) {
+      const maskedHeaders: Record<string, string> = {};
+      for (const [k, v] of Object.entries(rawHeaders)) {
+        maskedHeaders[k] = secretKeys.has(k) ? '' : v;
+      }
+      (safe as ParsedServerConfig & { headers?: Record<string, string> }).headers = maskedHeaders;
+    }
+    safe.secretHeaderKeys = config.secretHeaderKeys;
+  }
+
   return Object.fromEntries(
     Object.entries(safe).filter(([, v]) => v !== undefined),
   ) as Partial<ParsedServerConfig>;

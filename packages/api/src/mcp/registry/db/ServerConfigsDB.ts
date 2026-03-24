@@ -217,6 +217,28 @@ export class ServerConfigsDB implements IServerConfigsRepositoryInterface {
       };
     }
 
+    // Retain existing encrypted values for secret headers that were submitted with blank values.
+    // A blank value means "don't change this secret header" (same pattern as oauth.client_secret).
+    const newSecretKeys = configToSave.secretHeaderKeys;
+    if (newSecretKeys?.length && existingServer?.config) {
+      const existingHeaders = (
+        existingServer.config as ParsedServerConfig & { headers?: Record<string, string> }
+      ).headers;
+      const currentHeaders = (
+        configToSave as ParsedServerConfig & { headers?: Record<string, string> }
+      ).headers;
+      if (existingHeaders && currentHeaders) {
+        const retainedHeaders = { ...currentHeaders };
+        for (const secretKey of newSecretKeys) {
+          if (!retainedHeaders[secretKey] && existingHeaders[secretKey]) {
+            retainedHeaders[secretKey] = existingHeaders[secretKey];
+          }
+        }
+        (configToSave as ParsedServerConfig & { headers?: Record<string, string> }).headers =
+          retainedHeaders;
+      }
+    }
+
     await this._dbMethods.updateMCPServer(serverName, { config: configToSave });
   }
 
@@ -469,7 +491,8 @@ export class ServerConfigsDB implements IServerConfigsRepositoryInterface {
 
   /**
    * Encrypts sensitive fields in config before database storage.
-   * Encrypts oauth.client_secret and apiKey.key (when source === 'admin').
+   * Encrypts oauth.client_secret, apiKey.key (when source === 'admin'),
+   * and header values listed in secretHeaderKeys.
    * Throws on failure to prevent storing plaintext secrets.
    */
   private async encryptConfig(config: ParsedServerConfig): Promise<ParsedServerConfig> {
@@ -502,12 +525,37 @@ export class ServerConfigsDB implements IServerConfigsRepositoryInterface {
       }
     }
 
+    const secretHeaderKeys = result.secretHeaderKeys;
+    if (secretHeaderKeys?.length) {
+      const resultWithHeaders = result as ParsedServerConfig & { headers?: Record<string, string> };
+      if (resultWithHeaders.headers) {
+        const encryptedHeaders = { ...resultWithHeaders.headers };
+        for (const secretKey of secretHeaderKeys) {
+          const val = encryptedHeaders[secretKey];
+          if (val) {
+            try {
+              encryptedHeaders[secretKey] = await encryptV2(val);
+            } catch (error) {
+              logger.error(
+                `[ServerConfigsDB.encryptConfig] Failed to encrypt header "${secretKey}"`,
+                error,
+              );
+              throw new Error('Failed to encrypt MCP server configuration');
+            }
+          }
+        }
+        resultWithHeaders.headers = encryptedHeaders;
+        result = resultWithHeaders as ParsedServerConfig;
+      }
+    }
+
     return result;
   }
 
   /**
    * Decrypts sensitive fields in config after database retrieval.
-   * Decrypts oauth.client_secret and apiKey.key (when source === 'admin').
+   * Decrypts oauth.client_secret, apiKey.key (when source === 'admin'),
+   * and header values listed in secretHeaderKeys.
    * Returns config without secret on failure (graceful degradation).
    */
   private async decryptConfig(config: ParsedServerConfig): Promise<ParsedServerConfig> {
@@ -551,6 +599,30 @@ export class ServerConfigsDB implements IServerConfigsRepositoryInterface {
           ...result,
           oauth: oauthWithoutSecret,
         };
+      }
+    }
+
+    const secretHeaderKeys = result.secretHeaderKeys;
+    if (secretHeaderKeys?.length) {
+      const resultWithHeaders = result as ParsedServerConfig & { headers?: Record<string, string> };
+      if (resultWithHeaders.headers) {
+        const decryptedHeaders = { ...resultWithHeaders.headers };
+        for (const secretKey of secretHeaderKeys) {
+          const val = decryptedHeaders[secretKey];
+          if (val) {
+            try {
+              decryptedHeaders[secretKey] = await decryptV2(val);
+            } catch (error) {
+              logger.warn(
+                `[ServerConfigsDB.decryptConfig] Failed to decrypt header "${secretKey}", returning empty value`,
+                error,
+              );
+              decryptedHeaders[secretKey] = '';
+            }
+          }
+        }
+        resultWithHeaders.headers = decryptedHeaders;
+        result = resultWithHeaders as ParsedServerConfig;
       }
     }
 
