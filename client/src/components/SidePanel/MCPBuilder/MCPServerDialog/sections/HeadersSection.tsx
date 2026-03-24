@@ -131,7 +131,7 @@ function HeaderRow({ index, onRemove, availableVars }: HeaderRowProps) {
                 <ChevronDown className="size-3 shrink-0" aria-hidden="true" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[10rem]">
+            <DropdownMenuContent align="end" className="z-[160] min-w-[10rem]">
               {availableVars.map(({ key, title }) => (
                 <DropdownMenuItem
                   key={key}
