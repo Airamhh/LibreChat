@@ -52,6 +52,8 @@ export interface CustomUserVarEntry {
   description: string;
 }
 
+export type ServerInstructionsMode = 'none' | 'server' | 'custom';
+
 // Form data interface
 export interface MCPServerFormData {
   title: string;
@@ -63,6 +65,9 @@ export interface MCPServerFormData {
   trust: boolean;
   headers: HeaderEntry[];
   customUserVars: CustomUserVarEntry[];
+  chatMenu: boolean;
+  serverInstructionsMode: ServerInstructionsMode;
+  serverInstructionsCustom: string;
 }
 
 interface UseMCPServerFormProps {
@@ -106,6 +111,10 @@ export function useMCPServerForm({ server, onSuccess, onClose }: UseMCPServerFor
         'secretHeaderKeys' in server.config ? server.config.secretHeaderKeys : undefined;
       const secretHeaderKeysSet = new Set(rawSecretHeaderKeys ?? []);
 
+      const si = server.config.serverInstructions;
+      const serverInstructionsMode: ServerInstructionsMode =
+        typeof si === 'string' ? 'custom' : si === true ? 'server' : 'none';
+
       return {
         title: server.config.title || '',
         description: server.config.description || '',
@@ -138,6 +147,9 @@ export function useMCPServerForm({ server, onSuccess, onClose }: UseMCPServerFor
           title: cfg.title,
           description: cfg.description,
         })),
+        chatMenu: server.config.chatMenu !== false,
+        serverInstructionsMode,
+        serverInstructionsCustom: typeof si === 'string' ? si : '',
       };
     }
 
@@ -160,7 +172,11 @@ export function useMCPServerForm({ server, onSuccess, onClose }: UseMCPServerFor
         oauth_scope: '',
       },
       trust: false,
-      headers: [],      customUserVars: [],
+      headers: [],
+      customUserVars: [],
+      chatMenu: true,
+      serverInstructionsMode: 'none' as ServerInstructionsMode,
+      serverInstructionsCustom: '',
     };
   }, [server]);
 
@@ -213,6 +229,12 @@ export function useMCPServerForm({ server, onSuccess, onClose }: UseMCPServerFor
         title: formData.title,
         ...(formData.description && { description: formData.description }),
         ...(formData.icon && { iconPath: formData.icon }),
+        ...(!formData.chatMenu && { chatMenu: false }),
+        ...(formData.serverInstructionsMode === 'server' && { serverInstructions: true }),
+        ...(formData.serverInstructionsMode === 'custom' &&
+          formData.serverInstructionsCustom.trim() && {
+            serverInstructions: formData.serverInstructionsCustom.trim(),
+          }),
       };
 
       // Add HTTP headers
