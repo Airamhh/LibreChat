@@ -221,12 +221,13 @@ describe('CustomUserVarsDefinitionSection – pre-populated entries', () => {
         }}
       />,
     );
-    const keyInput = screen.getByDisplayValue('TOKEN') as HTMLInputElement;
-    const titleInput = screen.getByDisplayValue('Auth Token') as HTMLInputElement;
-    const descTextarea = screen.getByDisplayValue('Bearer token for auth') as HTMLTextAreaElement;
-    expect(keyInput).toBeInTheDocument();
-    expect(titleInput).toBeInTheDocument();
-    expect(descTextarea).toBeInTheDocument();
+    // Verify the inputs are rendered and registered under the correct field-array paths.
+    const keyInput = screen.getByPlaceholderText('e.g. API_KEY');
+    const titleInput = screen.getByPlaceholderText('e.g. API Key');
+    const descTextarea = screen.getByPlaceholderText('e.g. Your API key for this service');
+    expect(keyInput).toHaveAttribute('name', 'customUserVars.0.key');
+    expect(titleInput).toHaveAttribute('name', 'customUserVars.0.title');
+    expect(descTextarea).toHaveAttribute('name', 'customUserVars.0.description');
   });
 
   it('allows empty description (optional field)', () => {

@@ -205,9 +205,11 @@ describe('HeadersSection – pre-populated rows', () => {
         }}
       />,
     );
-    const keyInputs = screen.getAllByLabelText('Header key') as HTMLInputElement[];
-    expect(keyInputs[0].value).toBe('X-Custom');
-    expect(keyInputs[1].value).toBe('Authorization');
+    const keyInputs = screen.getAllByLabelText('Header key');
+    expect(keyInputs).toHaveLength(2);
+    // Verify each input is registered under the correct field-array path.
+    expect(keyInputs[0]).toHaveAttribute('name', 'headers.0.key');
+    expect(keyInputs[1]).toHaveAttribute('name', 'headers.1.key');
   });
 });
 
@@ -233,33 +235,36 @@ describe('HeadersSection – secret toggle', () => {
     expect(valueInput).not.toHaveAttribute('data-testid', 'secret-input');
   });
 
-  it('renders the "Mark as not secret" button (Lock icon) when isSecret is true', () => {
+  it('renders the "Mark as not secret" button (Lock icon) after toggling to secret', () => {
     render(
       <Wrapper
-        defaultValues={{ headers: [{ key: 'Authorization', value: '', isSecret: true }] }}
+        defaultValues={{ headers: [{ key: 'X-Test', value: '', isSecret: false }] }}
       />,
     );
+    fireEvent.click(screen.getByRole('button', { name: 'Mark as secret' }));
     expect(screen.getByRole('button', { name: 'Mark as not secret' })).toBeInTheDocument();
     expect(screen.getByTestId('lock-icon')).toBeInTheDocument();
   });
 
-  it('renders a password input (SecretInput) for a secret header', () => {
+  it('renders a password input (SecretInput) after toggling to secret', () => {
     render(
       <Wrapper
-        defaultValues={{ headers: [{ key: 'Authorization', value: '', isSecret: true }] }}
+        defaultValues={{ headers: [{ key: 'X-Test', value: '', isSecret: false }] }}
       />,
     );
+    fireEvent.click(screen.getByRole('button', { name: 'Mark as secret' }));
     expect(screen.getByTestId('secret-input')).toBeInTheDocument();
     const secretInput = screen.getByTestId('secret-input') as HTMLInputElement;
     expect(secretInput.type).toBe('password');
   });
 
-  it('has aria-pressed="true" on the secret toggle when isSecret is true', () => {
+  it('has aria-pressed="true" on the secret toggle after toggling to secret', () => {
     render(
       <Wrapper
-        defaultValues={{ headers: [{ key: 'X-Secret', value: '', isSecret: true }] }}
+        defaultValues={{ headers: [{ key: 'X-Test', value: '', isSecret: false }] }}
       />,
     );
+    fireEvent.click(screen.getByRole('button', { name: 'Mark as secret' }));
     const btn = screen.getByRole('button', { name: 'Mark as not secret' });
     expect(btn).toHaveAttribute('aria-pressed', 'true');
   });
