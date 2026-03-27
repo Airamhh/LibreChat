@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { QueryKeys } from 'librechat-data-provider';
 import { useQueryClient } from '@tanstack/react-query';
 import { DropdownPopup, Spinner, useToastContext } from '@librechat/client';
-import { Ellipsis, Share2, CopyPlus, Archive, Pen, Trash } from 'lucide-react';
+import { Ellipsis, Share2, CopyPlus, Archive, Pen, Trash, Pin, PinOff } from 'lucide-react';
 import type { MouseEvent } from 'react';
 import type { TMessage } from 'librechat-data-provider';
 import {
@@ -13,7 +13,7 @@ import {
   useGetStartupConfig,
   useArchiveConvoMutation,
 } from '~/data-provider';
-import { useLocalize, useNavigateToConvo, useNewConvo } from '~/hooks';
+import { useLocalize, useNavigateToConvo, useNewConvo, usePinnedConversations } from '~/hooks';
 import { NotificationSeverity } from '~/common';
 import { useChatContext } from '~/Providers';
 import DeleteButton from './DeleteButton';
@@ -45,6 +45,7 @@ function ConvoOptions({
   const { data: startupConfig } = useGetStartupConfig();
   const { navigateToConvo } = useNavigateToConvo(index);
   const { showToast } = useToastContext();
+  const { isPinnedConversation, togglePinnedConversation } = usePinnedConversations();
 
   const navigate = useNavigate();
   const { conversationId: currentConvoId } = useParams();
@@ -183,6 +184,17 @@ function ConvoOptions({
     });
   }, [conversationId, duplicateConversation]);
 
+  const handlePinClick = useCallback(() => {
+    if (conversationId) {
+      togglePinnedConversation(conversationId);
+    }
+  }, [conversationId, togglePinnedConversation]);
+
+  const isPinned = useMemo(
+    () => isPinnedConversation(conversationId),
+    [isPinnedConversation, conversationId],
+  );
+
   const dropdownItems = useMemo(
     () => [
       {
@@ -196,6 +208,15 @@ function ConvoOptions({
         hideOnClick: false,
         ref: shareButtonRef,
         render: (props) => <button {...props} />,
+      },
+      {
+        label: isPinned ? localize('com_ui_unpin') : localize('com_ui_pin'),
+        onClick: handlePinClick,
+        icon: isPinned ? (
+          <PinOff className="icon-sm mr-2 text-text-primary" aria-hidden="true" />
+        ) : (
+          <Pin className="icon-sm mr-2 text-text-primary" aria-hidden="true" />
+        ),
       },
       {
         label: localize('com_ui_rename'),
@@ -238,6 +259,8 @@ function ConvoOptions({
       localize,
       shareHandler,
       startupConfig,
+      isPinned,
+      handlePinClick,
       renameHandler,
       deleteHandler,
       isArchiveLoading,
