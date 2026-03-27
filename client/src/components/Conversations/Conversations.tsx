@@ -220,9 +220,17 @@ const Conversations: FC<ConversationsProps> = ({
 
   pinnedContentKeyRef.current = `${pinnedConversations.length}-${isPinnedConversationsLoading ? 1 : 0}`;
 
+  const pinnedConversationIds = useMemo(
+    () => new Set(pinnedConversations.map((pc) => pc.conversationId)),
+    [pinnedConversations],
+  );
+
   const filteredConversations = useMemo(
-    () => rawConversations.filter(Boolean) as TConversation[],
-    [rawConversations],
+    () =>
+      (rawConversations.filter(Boolean) as TConversation[]).filter(
+        (convo) => !pinnedConversationIds.has(convo.conversationId),
+      ),
+    [rawConversations, pinnedConversationIds],
   );
 
   const groupedConversations = useMemo(

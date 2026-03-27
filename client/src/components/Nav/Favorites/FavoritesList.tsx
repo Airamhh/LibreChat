@@ -147,11 +147,11 @@ export default function FavoritesList({
   const onSelectEndpoint = useCallback(
     (...args: Parameters<NonNullable<typeof _onSelectEndpoint>>) => {
       _onSelectEndpoint?.(...args);
-      if (isSmallScreen && toggleNav) {
+      if (toggleNav) {
         toggleNav();
       }
     },
-    [_onSelectEndpoint, isSmallScreen, toggleNav],
+    [_onSelectEndpoint, toggleNav],
   );
 
   const marketplaceRef = useRef<HTMLDivElement>(null);
@@ -159,10 +159,10 @@ export default function FavoritesList({
 
   const handleAgentMarketplace = useCallback(() => {
     navigate('/agents');
-    if (isSmallScreen && toggleNav) {
+    if (toggleNav) {
       toggleNav();
     }
-  }, [navigate, isSmallScreen, toggleNav]);
+  }, [navigate, toggleNav]);
 
   const handleRemoveFocus = useCallback(() => {
     if (marketplaceRef.current) {
