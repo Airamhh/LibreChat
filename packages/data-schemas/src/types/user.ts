@@ -45,6 +45,9 @@ export interface IUser extends Document {
     model?: string;
     endpoint?: string;
   }>;
+  pinnedConversations?: Array<{
+    conversationId: string;
+  }>;
   createdAt?: Date;
   updatedAt?: Date;
   /** Field for external source identification (for consistency with TPrincipal schema) */

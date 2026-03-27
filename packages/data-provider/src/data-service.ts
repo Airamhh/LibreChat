@@ -31,12 +31,28 @@ export type FavoriteItem = {
   endpoint?: string;
 };
 
+export type PinnedConversationItem = {
+  conversationId: string;
+};
+
 export function getFavorites(): Promise<FavoriteItem[]> {
   return request.get(`${endpoints.apiBaseUrl()}/api/user/settings/favorites`);
 }
 
 export function updateFavorites(favorites: FavoriteItem[]): Promise<FavoriteItem[]> {
   return request.post(`${endpoints.apiBaseUrl()}/api/user/settings/favorites`, { favorites });
+}
+
+export function getPinnedConversations(): Promise<PinnedConversationItem[]> {
+  return request.get(`${endpoints.apiBaseUrl()}/api/user/settings/pinned-conversations`);
+}
+
+export function updatePinnedConversations(
+  pinnedConversations: PinnedConversationItem[],
+): Promise<PinnedConversationItem[]> {
+  return request.post(`${endpoints.apiBaseUrl()}/api/user/settings/pinned-conversations`, {
+    pinnedConversations,
+  });
 }
 
 export function getSharedMessages(shareId: string): Promise<t.TSharedMessagesResponse> {

@@ -144,6 +144,15 @@ const userSchema = new Schema<IUser>(
       ],
       default: [],
     },
+    pinnedConversations: {
+      type: [
+        {
+          _id: false,
+          conversationId: String,
+        },
+      ],
+      default: [],
+    },
     /** Field for external source identification (for consistency with TPrincipal schema) */
     idOnTheSource: {
       type: String,

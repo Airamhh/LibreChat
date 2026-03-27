@@ -68,6 +68,7 @@ let mockShowMarketplace = true;
 
 jest.mock('~/hooks', () => ({
   useFavorites: () => mockFavoritesState,
+  usePinnedConversations: () => ({ pinnedConversations: [], isLoading: false }),
   useLocalize: () => (key: string) => key,
   useShowMarketplace: () => mockShowMarketplace,
   TranslationKeys: {},
@@ -90,6 +91,11 @@ jest.mock('~/utils', () => ({
 jest.mock('~/components/Nav/Favorites/FavoritesList', () => ({
   __esModule: true,
   default: () => <div data-testid="favorites-list" />,
+}));
+
+jest.mock('~/components/Nav/PinnedChats/PinnedChatsList', () => ({
+  __esModule: true,
+  default: () => <div data-testid="pinned-chats-list" />,
 }));
 
 jest.mock('../Convo', () => ({
@@ -121,6 +127,10 @@ describe('Conversations – favorites CellMeasurerCache key invalidation', () =>
         isSearchLoading={false}
         isChatsExpanded={true}
         setIsChatsExpanded={jest.fn()}
+        isPinnedAgentsExpanded={true}
+        setIsPinnedAgentsExpanded={jest.fn()}
+        isPinnedChatsExpanded={true}
+        setIsPinnedChatsExpanded={jest.fn()}
       />
     </RecoilRoot>
   );
@@ -130,14 +140,15 @@ describe('Conversations – favorites CellMeasurerCache key invalidation', () =>
     const cache = mockCapturedCache!;
     expect(cache).toBeDefined();
 
-    cache.set(0, 0, 300, 48);
-    expect(cache.has(0, 0)).toBe(true);
-    expect(cache.getHeight(0, 0)).toBe(48);
+    // With pinned agents header visible, favorites row is at index 1
+    cache.set(1, 0, 300, 48);
+    expect(cache.has(1, 0)).toBe(true);
+    expect(cache.getHeight(1, 0)).toBe(48);
 
     mockFavoritesState.favorites = [{ model: 'gpt-4', endpoint: 'openAI' }];
     rerender(<Wrapper />);
 
-    expect(cache.has(0, 0)).toBe(false);
+    expect(cache.has(1, 0)).toBe(false);
   });
 
   it('should invalidate the cached favorites height when loading state transitions', () => {
@@ -145,13 +156,14 @@ describe('Conversations – favorites CellMeasurerCache key invalidation', () =>
     const { rerender } = render(<Wrapper />);
     const cache = mockCapturedCache!;
 
-    cache.set(0, 0, 300, 80);
-    expect(cache.has(0, 0)).toBe(true);
+    // With pinned agents header visible, favorites row is at index 1
+    cache.set(1, 0, 300, 80);
+    expect(cache.has(1, 0)).toBe(true);
 
     mockFavoritesState.isLoading = false;
     rerender(<Wrapper />);
 
-    expect(cache.has(0, 0)).toBe(false);
+    expect(cache.has(1, 0)).toBe(false);
   });
 
   it('should invalidate the cached favorites height when marketplace visibility changes', () => {
@@ -159,13 +171,14 @@ describe('Conversations – favorites CellMeasurerCache key invalidation', () =>
     const { rerender } = render(<Wrapper />);
     const cache = mockCapturedCache!;
 
-    cache.set(0, 0, 300, 48);
-    expect(cache.has(0, 0)).toBe(true);
+    // With pinned agents header visible, favorites row is at index 1
+    cache.set(1, 0, 300, 48);
+    expect(cache.has(1, 0)).toBe(true);
 
     mockShowMarketplace = false;
     rerender(<Wrapper />);
 
-    expect(cache.has(0, 0)).toBe(false);
+    expect(cache.has(1, 0)).toBe(false);
   });
 
   it('should retain the cached favorites height when content state is unchanged', () => {
@@ -173,13 +186,14 @@ describe('Conversations – favorites CellMeasurerCache key invalidation', () =>
     const { rerender } = render(<Wrapper />);
     const cache = mockCapturedCache!;
 
-    cache.set(0, 0, 300, 88);
-    expect(cache.has(0, 0)).toBe(true);
-    expect(cache.getHeight(0, 0)).toBe(88);
+    // With pinned agents header visible, favorites row is at index 1
+    cache.set(1, 0, 300, 88);
+    expect(cache.has(1, 0)).toBe(true);
+    expect(cache.getHeight(1, 0)).toBe(88);
 
     rerender(<Wrapper />);
 
-    expect(cache.has(0, 0)).toBe(true);
-    expect(cache.getHeight(0, 0)).toBe(88);
+    expect(cache.has(1, 0)).toBe(true);
+    expect(cache.getHeight(1, 0)).toBe(88);
   });
 });

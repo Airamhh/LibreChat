@@ -33,6 +33,14 @@ const ConversationsSection = memo(() => {
   useTitleGeneration(isAuthenticated);
 
   const [isChatsExpanded, setIsChatsExpanded] = useLocalStorage('chatsExpanded', true);
+  const [isPinnedAgentsExpanded, setIsPinnedAgentsExpanded] = useLocalStorage(
+    'pinnedAgentsExpanded',
+    true,
+  );
+  const [isPinnedChatsExpanded, setIsPinnedChatsExpanded] = useLocalStorage(
+    'pinnedChatsExpanded',
+    true,
+  );
   const [showLoading, setShowLoading] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
 
@@ -159,6 +167,10 @@ const ConversationsSection = memo(() => {
           isSearchLoading={isSearchLoading}
           isChatsExpanded={isChatsExpanded}
           setIsChatsExpanded={setIsChatsExpanded}
+          isPinnedAgentsExpanded={isPinnedAgentsExpanded}
+          setIsPinnedAgentsExpanded={setIsPinnedAgentsExpanded}
+          isPinnedChatsExpanded={isPinnedChatsExpanded}
+          setIsPinnedChatsExpanded={setIsPinnedChatsExpanded}
         />
       </div>
     </div>
