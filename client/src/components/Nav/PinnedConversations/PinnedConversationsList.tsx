@@ -1,7 +1,7 @@
 import React, { useRef, useCallback, useMemo, useEffect } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { useRecoilValue } from 'recoil';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@librechat/client';
 import { QueryKeys, dataService } from 'librechat-data-provider';
 import type { TConversation } from 'librechat-data-provider';
@@ -14,7 +14,7 @@ import store from '~/store';
 type ConversationQueryResult = { found: true; conversation: TConversation } | { found: false };
 
 const PinnedConversationSkeleton = () => (
-  <div className="flex h-12 w-full items-center rounded-lg px-3 py-2 md:h-9">
+  <div className="flex h-12 w-full items-center rounded-lg py-2 md:h-9">
     <Skeleton className="mr-2 h-5 w-5 rounded-full" />
     <Skeleton className="h-4 w-32" />
   </div>
@@ -123,11 +123,20 @@ export default function PinnedConversationsList({
     [safePinnedConversations],
   );
 
+  const queryClient = useQueryClient();
+
   const conversationQueries = useQueries({
     queries: allConversationIds.map((conversationId) => ({
       queryKey: [QueryKeys.conversation, conversationId],
       queryFn: async (): Promise<ConversationQueryResult> => {
         try {
+          const cachedConvo = queryClient.getQueryData<TConversation>([
+            QueryKeys.conversation,
+            conversationId,
+          ]);
+          if (cachedConvo) {
+            return { found: true, conversation: cachedConvo };
+          }
           const conversation = await dataService.getConversationById(conversationId);
           return { found: true, conversation };
         } catch (error) {
@@ -225,7 +234,7 @@ export default function PinnedConversationsList({
 
   if (isPinnedLoading) {
     return (
-      <div className="mb-2 flex flex-col pb-2">
+      <div className="mb-2 flex flex-col px-3 pb-2">
         <div className="mt-1 flex flex-col gap-1">
           <PinnedConversationSkeleton />
         </div>
@@ -234,7 +243,7 @@ export default function PinnedConversationsList({
   }
 
   return (
-    <div className="mb-2 flex flex-col">
+    <div className="mb-2 flex flex-col px-3">
       <div className="mt-1 flex flex-col gap-1">
         {isConversationsLoading ? (
           <>
