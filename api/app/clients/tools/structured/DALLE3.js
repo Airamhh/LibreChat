@@ -159,7 +159,7 @@ class DALLE3 extends Tool {
       });
     } catch (error) {
       logger.error('[DALL-E-3] Problem generating the image:', error);
-      trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'dalle3' });
+      trackException(error, { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'dalle3' });
       return this
         .returnValue(`Something went wrong when trying to generate the image. The DALL-E API may be unavailable:
 Error Message: ${error.message}`);
@@ -238,7 +238,7 @@ Error Message: ${error.message}`);
       }
     } catch (error) {
       logger.error('Error while saving the image:', error);
-      trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_SAVE, tool: 'dalle3' });
+      trackException(error, { event: TelemetryEvents.ERROR_IMAGE_SAVE, tool: 'dalle3' });
       this.result = `Failed to save the image locally. ${error.message}`;
     }
 

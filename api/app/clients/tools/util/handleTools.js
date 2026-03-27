@@ -412,7 +412,7 @@ const loadTools = async ({
       toolPromises.push(
         validTool().catch((error) => {
           logger.error(`Error loading tool ${tool}:`, error);
-          trackException(error, { eventType: TelemetryEvents.ERROR_TOOL_LOADING, tool });
+          trackException(error, { event: TelemetryEvents.ERROR_TOOL_LOADING, tool });
           return null;
         }),
       );

@@ -94,7 +94,7 @@ router.get(
       res.status(200).send(group);
     } catch (error) {
       logger.error('Error getting prompt group', error);
-      trackException(error, { eventType: TelemetryEvents.ERROR_PROMPT, operation: 'get_group' });
+      trackException(error, { event: TelemetryEvents.ERROR_PROMPT, operation: 'get_group' });
       res.status(500).send({ message: 'Error getting prompt group' });
     }
   },
@@ -154,7 +154,7 @@ router.get('/all', async (req, res) => {
     res.status(200).send(groupsWithPublicFlag);
   } catch (error) {
     logger.error(error);
-    trackException(error instanceof Error ? error : new Error(String(error)), { eventType: TelemetryEvents.ERROR_PROMPT, operation: 'list_all_groups' });
+    trackException(error instanceof Error ? error : new Error(String(error)), { event: TelemetryEvents.ERROR_PROMPT, operation: 'list_all_groups' });
     res.status(500).send({ error: 'Error getting prompt groups' });
   }
 });
@@ -241,7 +241,7 @@ router.get('/groups', async (req, res) => {
     res.status(200).send(response);
   } catch (error) {
     logger.error(error);
-    trackException(error instanceof Error ? error : new Error(String(error)), { eventType: TelemetryEvents.ERROR_PROMPT, operation: 'list_groups_paginated' });
+    trackException(error instanceof Error ? error : new Error(String(error)), { event: TelemetryEvents.ERROR_PROMPT, operation: 'list_groups_paginated' });
     res.status(500).send({ error: 'Error getting prompt groups' });
   }
 });
@@ -287,14 +287,14 @@ const createNewPromptGroup = async (req, res) => {
           `[createPromptGroup] Failed to grant owner permissions for promptGroup ${result.prompt.groupId}:`,
           permissionError,
         );
-        trackException(permissionError instanceof Error ? permissionError : new Error(String(permissionError)), { eventType: TelemetryEvents.ERROR_PROMPT, operation: 'grant_permissions' });
+        trackException(permissionError instanceof Error ? permissionError : new Error(String(permissionError)), { event: TelemetryEvents.ERROR_PROMPT, operation: 'grant_permissions' });
       }
     }
 
     res.status(200).send(result);
   } catch (error) {
     logger.error(error);
-    trackException(error instanceof Error ? error : new Error(String(error)), { eventType: TelemetryEvents.ERROR_PROMPT, operation: 'create_group' });
+    trackException(error instanceof Error ? error : new Error(String(error)), { event: TelemetryEvents.ERROR_PROMPT, operation: 'create_group' });
     res.status(500).send({ error: 'Error creating prompt group' });
   }
 };
@@ -337,7 +337,7 @@ const addPromptToGroup = async (req, res) => {
     res.status(200).send(result);
   } catch (error) {
     logger.error(error);
-    trackException(error instanceof Error ? error : new Error(String(error)), { eventType: TelemetryEvents.ERROR_PROMPT, operation: 'add_prompt' });
+    trackException(error instanceof Error ? error : new Error(String(error)), { event: TelemetryEvents.ERROR_PROMPT, operation: 'add_prompt' });
     res.status(500).send({ error: 'Error adding prompt to group' });
   }
 };
@@ -375,7 +375,7 @@ router.post(
       res.status(200).send(result);
     } catch (error) {
       logger.error('[recordPromptUsage]', error);
-      trackException(error instanceof Error ? error : new Error(String(error)), { eventType: TelemetryEvents.ERROR_PROMPT, operation: 'record_usage' });
+      trackException(error instanceof Error ? error : new Error(String(error)), { event: TelemetryEvents.ERROR_PROMPT, operation: 'record_usage' });
       if (error.message === 'Invalid groupId') {
         return res.status(400).send({ error: 'Invalid groupId' });
       }
@@ -413,7 +413,7 @@ const patchPromptGroup = async (req, res) => {
     res.status(200).send(promptGroup);
   } catch (error) {
     logger.error(error);
-    trackException(error instanceof Error ? error : new Error(String(error)), { eventType: TelemetryEvents.ERROR_PROMPT, operation: 'update_group' });
+    trackException(error instanceof Error ? error : new Error(String(error)), { event: TelemetryEvents.ERROR_PROMPT, operation: 'update_group' });
     res.status(500).send({ error: 'Error updating prompt group' });
   }
 };
@@ -441,7 +441,7 @@ router.patch(
       res.status(200).send(result);
     } catch (error) {
       logger.error(error);
-      trackException(error instanceof Error ? error : new Error(String(error)), { eventType: TelemetryEvents.ERROR_PROMPT, operation: 'set_production' });
+      trackException(error instanceof Error ? error : new Error(String(error)), { event: TelemetryEvents.ERROR_PROMPT, operation: 'set_production' });
       res.status(500).send({ error: 'Error updating prompt production' });
     }
   },
@@ -505,7 +505,7 @@ router.get('/', async (req, res) => {
     res.status(200).send(prompts);
   } catch (error) {
     logger.error(error);
-    trackException(error instanceof Error ? error : new Error(String(error)), { eventType: TelemetryEvents.ERROR_PROMPT, operation: 'list_prompts' });
+    trackException(error instanceof Error ? error : new Error(String(error)), { event: TelemetryEvents.ERROR_PROMPT, operation: 'list_prompts' });
     res.status(500).send({ error: 'Error getting prompts' });
   }
 });
@@ -531,7 +531,7 @@ const deletePromptController = async (req, res) => {
     res.status(200).send(result);
   } catch (error) {
     logger.error(error);
-    trackException(error instanceof Error ? error : new Error(String(error)), { eventType: TelemetryEvents.ERROR_PROMPT, operation: 'delete_prompt' });
+    trackException(error instanceof Error ? error : new Error(String(error)), { event: TelemetryEvents.ERROR_PROMPT, operation: 'delete_prompt' });
     res.status(500).send({ error: 'Error deleting prompt' });
   }
 };
@@ -550,7 +550,7 @@ const deletePromptGroupController = async (req, res) => {
     res.send(message);
   } catch (error) {
     logger.error('Error deleting prompt group', error);
-    trackException(error instanceof Error ? error : new Error(String(error)), { eventType: TelemetryEvents.ERROR_PROMPT, operation: 'delete_group' });
+    trackException(error instanceof Error ? error : new Error(String(error)), { event: TelemetryEvents.ERROR_PROMPT, operation: 'delete_group' });
     res.status(500).send({ message: 'Error deleting prompt group' });
   }
 };

@@ -1,6 +1,6 @@
 const { logger } = require('@librechat/data-schemas');
 const { ViolationTypes } = require('librechat-data-provider');
-const { isEnabled, math, removePorts } = require('@librechat/api');
+const { isEnabled, math, removePorts, trackEvent, TelemetryEvents } = require('@librechat/api');
 const { deleteAllUserSessions } = require('~/models');
 const getLogStores = require('./getLogStores');
 
@@ -76,6 +76,12 @@ const banViolation = async (req, res, errorMessage) => {
   if (req.ip) {
     await banLogs.set(req.ip, { type, user_id, violation_count, duration, expiresAt });
   }
+
+  trackEvent(TelemetryEvents.SECURITY_USER_BANNED, {
+    violationType: type,
+    violationCount: String(violation_count),
+    durationMinutes: String(Math.round(duration / 1000 / 60)),
+  });
 
   errorMessage.ban = true;
   errorMessage.ban_duration = duration;

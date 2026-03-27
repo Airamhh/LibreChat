@@ -36,7 +36,7 @@ router.post('/', async (req, res) => {
   } catch (error) {
     const message = 'An error occurred while uploading the profile picture';
     logger.error(message, error);
-    trackException(error, { eventType: TelemetryEvents.ERROR_FILE_AVATAR });
+    trackException(error, { event: TelemetryEvents.ERROR_FILE_AVATAR });
     res.status(500).json({ message });
   } finally {
     try {

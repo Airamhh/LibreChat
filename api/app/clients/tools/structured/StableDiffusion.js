@@ -119,7 +119,7 @@ class StableDiffusionAPI extends Tool {
       generationResponse = await axios.post(`${url}/sdapi/v1/txt2img`, payload);
     } catch (error) {
       logger.error('[StableDiffusion] Error while generating image:', error);
-      trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'stable_diffusion' });
+      trackException(error, { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'stable_diffusion' });
       return this.returnValue('Error making API request.');
     }
     const image = generationResponse.data.images[0];
@@ -130,7 +130,7 @@ class StableDiffusionAPI extends Tool {
       info = JSON.parse(generationResponse.data.info);
     } catch (error) {
       logger.error('[StableDiffusion] Error while getting image metadata:', error);
-      trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'stable_diffusion', phase: 'metadata' });
+      trackException(error, { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'stable_diffusion', phase: 'metadata' });
     }
 
     const file_id = uuidv4();
@@ -202,7 +202,7 @@ class StableDiffusionAPI extends Tool {
       this.result = this.getMarkdownImageUrl(imageName);
     } catch (error) {
       logger.error('[StableDiffusion] Error while saving the image:', error);
-      trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_SAVE, tool: 'stable_diffusion' });
+      trackException(error, { event: TelemetryEvents.ERROR_IMAGE_SAVE, tool: 'stable_diffusion' });
     }
 
     return this.returnValue(this.result);

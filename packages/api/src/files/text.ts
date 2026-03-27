@@ -6,6 +6,7 @@ import { FileSources } from 'librechat-data-provider';
 import type { ServerRequest } from '~/types';
 import { logAxiosError, readFileAsString } from '~/utils';
 import { generateShortLivedToken } from '~/crypto/jwt';
+import { trackEvent, TelemetryEvents } from '~/telemetry';
 
 /**
  * Attempts to parse text using RAG API, falls back to native text parsing
@@ -41,6 +42,7 @@ export async function parseText({
     });
     if (healthResponse?.statusText !== 'OK' && healthResponse?.status !== 200) {
       logger.debug('[parseText] RAG API health check failed, falling back to native parsing');
+      trackEvent(TelemetryEvents.ERROR_RAG_API, { operation: 'health_check', reason: 'bad_status' });
       return parseTextNative(file);
     }
   } catch (healthError) {
@@ -48,6 +50,7 @@ export async function parseText({
       message: '[parseText] RAG API health check failed, falling back to native parsing:',
       error: healthError,
     });
+    trackEvent(TelemetryEvents.ERROR_RAG_API, { operation: 'health_check', reason: 'exception' });
     return parseTextNative(file);
   }
 
@@ -85,6 +88,7 @@ export async function parseText({
       message: '[parseText] RAG API text parsing failed, falling back to native parsing',
       error,
     });
+    trackEvent(TelemetryEvents.ERROR_RAG_API, { operation: 'text_parse', reason: 'exception' });
     return parseTextNative(file);
   }
 }

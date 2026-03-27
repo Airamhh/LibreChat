@@ -108,7 +108,7 @@ class AzureAISearch extends Tool {
       return JSON.stringify(resultDocuments);
     } catch (error) {
       logger.error('Azure AI Search request failed', error);
-      trackException(error, { eventType: TelemetryEvents.ERROR_SEARCH_TOOL, tool: 'azure_ai_search' });
+      trackException(error, { event: TelemetryEvents.ERROR_SEARCH_TOOL, tool: 'azure_ai_search' });
       return 'There was an error with Azure AI Search.';
     }
   }

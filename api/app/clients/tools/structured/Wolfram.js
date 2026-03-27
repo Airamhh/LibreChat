@@ -65,7 +65,7 @@ class WolframAlphaAPI extends Tool {
       return response.data;
     } catch (error) {
       logger.error('[WolframAlphaAPI] Error fetching raw text:', error);
-      trackException(error, { eventType: TelemetryEvents.ERROR_SEARCH_TOOL, tool: 'wolfram' });
+      trackException(error, { event: TelemetryEvents.ERROR_SEARCH_TOOL, tool: 'wolfram' });
       throw error;
     }
   }
@@ -97,11 +97,11 @@ class WolframAlphaAPI extends Tool {
     } catch (error) {
       if (error.response && error.response.data) {
         logger.error('[WolframAlphaAPI] Error data:', error);
-        trackException(error, { eventType: TelemetryEvents.ERROR_SEARCH_TOOL, tool: 'wolfram', phase: 'api_error_data' });
+        trackException(error, { event: TelemetryEvents.ERROR_SEARCH_TOOL, tool: 'wolfram', phase: 'api_error_data' });
         return error.response.data;
       } else {
         logger.error('[WolframAlphaAPI] Error querying Wolfram Alpha', error);
-        trackException(error, { eventType: TelemetryEvents.ERROR_SEARCH_TOOL, tool: 'wolfram', phase: 'query' });
+        trackException(error, { event: TelemetryEvents.ERROR_SEARCH_TOOL, tool: 'wolfram', phase: 'query' });
         return 'There was an error querying Wolfram Alpha.';
       }
     }

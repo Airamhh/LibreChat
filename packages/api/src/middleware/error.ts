@@ -80,7 +80,7 @@ export const ErrorController = (
     }
 
     logger.error('ErrorController => error', err);
-    trackException(err instanceof Error ? err : new Error(String(err)));
+    trackException(err instanceof Error ? err : new Error(String(err)), { event: TelemetryEvents.ERROR_SERVER });
     return res.status(500).send('An unknown error occurred.');
   } catch (processingError) {
     logger.error('ErrorController => processing error', processingError);

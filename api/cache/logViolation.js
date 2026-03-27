@@ -1,4 +1,4 @@
-const { isEnabled } = require('@librechat/api');
+const { isEnabled, trackEvent, TelemetryEvents } = require('@librechat/api');
 const { ViolationTypes } = require('librechat-data-provider');
 const getLogStores = require('./getLogStores');
 const banViolation = require('./banViolation');
@@ -31,6 +31,11 @@ const logViolation = async (req, res, type, errorMessage, score = 1) => {
   errorMessage.date = new Date().toISOString();
 
   await banViolation(req, res, errorMessage);
+  trackEvent(TelemetryEvents.SECURITY_VIOLATION, {
+    violationType: type,
+    violationCount: String(violationCount),
+    banned: String(errorMessage.ban === true),
+  });
   const userLogs = (await logs.get(key)) ?? [];
   userLogs.push(errorMessage);
   delete errorMessage.user_id;

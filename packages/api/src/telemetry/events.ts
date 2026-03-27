@@ -17,6 +17,10 @@ export const TelemetryEvents = {
   AUTH_REGISTER_FAILURE: 'auth.register.failure',
   /** A rate-limit was hit on an auth endpoint (possible brute-force). */
   SECURITY_RATE_LIMIT: 'security.rate_limit',
+  /** A security or rate-limit violation was recorded for a user. */
+  SECURITY_VIOLATION: 'security.violation',
+  /** A user was banned after exceeding the violation threshold. */
+  SECURITY_USER_BANNED: 'security.user_banned',
   /** Express global error handler caught an unexpected server error. */
   ERROR_SERVER: 'error.server',
   /** MongoDB duplicate-key error surfaced by the error handler. */
@@ -135,6 +139,14 @@ export const TelemetryEvents = {
   ERROR_STREAM: 'error.stream',
   /** BaseClient failed to save a message or map attachments during generation. */
   ERROR_BASE_CLIENT: 'error.base_client',
+
+  /* ── RAG API ─────────────────────────────────────────────────────────── */
+  /** The RAG API was unreachable, returned an error, or failed to delete an embedding. */
+  ERROR_RAG_API: 'error.rag_api',
+
+  /* ── Code interpreter ────────────────────────────────────────────────── */
+  /** Processing or re-uploading a code execution output file failed. */
+  ERROR_CODE_OUTPUT: 'error.code_output',
 } as const;
 
 export type TelemetryEvent = (typeof TelemetryEvents)[keyof typeof TelemetryEvents];

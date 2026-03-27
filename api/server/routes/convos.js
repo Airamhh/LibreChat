@@ -51,7 +51,7 @@ router.get('/', async (req, res) => {
     res.status(200).json(result);
   } catch (error) {
     logger.error('Error fetching conversations', error);
-    trackException(error, { eventType: TelemetryEvents.ERROR_CONVO_FETCH });
+    trackException(error, { event: TelemetryEvents.ERROR_CONVO_FETCH });
     res.status(500).json({ error: 'Error fetching conversations' });
   }
 });
@@ -123,7 +123,7 @@ router.delete('/', async (req, res) => {
       logger.debug('Deleted OpenAI thread:', response);
     } catch (error) {
       logger.error('Error deleting OpenAI thread:', error);
-      trackException(error, { eventType: TelemetryEvents.ERROR_CONVO_DELETE, source: 'openai_thread' });
+      trackException(error, { event: TelemetryEvents.ERROR_CONVO_DELETE, source: 'openai_thread' });
     }
   }
 
@@ -136,7 +136,7 @@ router.delete('/', async (req, res) => {
     res.status(201).json(dbResponse);
   } catch (error) {
     logger.error('Error clearing conversations', error);
-    trackException(error, { eventType: TelemetryEvents.ERROR_CONVO_DELETE, source: 'delete' });
+    trackException(error, { event: TelemetryEvents.ERROR_CONVO_DELETE, source: 'delete' });
     res.status(500).send('Error clearing conversations');
   }
 });
@@ -149,7 +149,7 @@ router.delete('/all', async (req, res) => {
     res.status(201).json(dbResponse);
   } catch (error) {
     logger.error('Error clearing conversations', error);
-    trackException(error, { eventType: TelemetryEvents.ERROR_CONVO_DELETE, source: 'delete_all' });
+    trackException(error, { event: TelemetryEvents.ERROR_CONVO_DELETE, source: 'delete_all' });
     res.status(500).send('Error clearing conversations');
   }
 });
@@ -185,7 +185,7 @@ router.post('/archive', validateConvoAccess, async (req, res) => {
     res.status(200).json(dbResponse);
   } catch (error) {
     logger.error('Error archiving conversation', error);
-    trackException(error, { eventType: TelemetryEvents.ERROR_CONVO_ARCHIVE });
+    trackException(error, { event: TelemetryEvents.ERROR_CONVO_ARCHIVE });
     res.status(500).send('Error archiving conversation');
   }
 });
@@ -230,7 +230,7 @@ router.post('/update', validateConvoAccess, async (req, res) => {
     res.status(201).json(dbResponse);
   } catch (error) {
     logger.error('Error updating conversation', error);
-    trackException(error, { eventType: TelemetryEvents.ERROR_CONVO_UPDATE });
+    trackException(error, { event: TelemetryEvents.ERROR_CONVO_UPDATE });
     res.status(500).send('Error updating conversation');
   }
 });
@@ -277,7 +277,7 @@ router.post(
       res.status(201).json({ message: 'Conversation(s) imported successfully' });
     } catch (error) {
       logger.error('Error processing file', error);
-      trackException(error, { eventType: TelemetryEvents.ERROR_CONVO_IMPORT });
+      trackException(error, { event: TelemetryEvents.ERROR_CONVO_IMPORT });
       res.status(500).send('Error processing file');
     }
   },
@@ -308,7 +308,7 @@ router.post('/fork', forkIpLimiter, forkUserLimiter, async (req, res) => {
     res.json(result);
   } catch (error) {
     logger.error('Error forking conversation:', error);
-    trackException(error, { eventType: TelemetryEvents.ERROR_CONVO_FORK });
+    trackException(error, { event: TelemetryEvents.ERROR_CONVO_FORK });
     res.status(500).send('Error forking conversation');
   }
 });
@@ -325,7 +325,7 @@ router.post('/duplicate', forkIpLimiter, forkUserLimiter, async (req, res) => {
     res.status(201).json(result);
   } catch (error) {
     logger.error('Error duplicating conversation:', error);
-    trackException(error, { eventType: TelemetryEvents.ERROR_CONVO_DUPLICATE });
+    trackException(error, { event: TelemetryEvents.ERROR_CONVO_DUPLICATE });
     res.status(500).send('Error duplicating conversation');
   }
 });

@@ -251,7 +251,7 @@ class FluxAPI extends Tool {
     } catch (error) {
       const details = this.getDetails(error?.response?.data || error.message);
       logger.error('[FluxAPI] Error while submitting task:', details);
-      trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'submit_task' });
+      trackException(error, { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'submit_task' });
 
       return this.returnValue(
         `Something went wrong when trying to generate the image. The Flux API may be unavailable:
@@ -283,13 +283,13 @@ class FluxAPI extends Tool {
           break;
         } else if (status === 'Error') {
           logger.error('[FluxAPI] Error in task:', resultResponse.data);
-          trackException(new Error('Flux task error'), { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'task_error' });
+          trackException(new Error('Flux task error'), { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'task_error' });
           return this.returnValue('An error occurred during image generation.');
         }
       } catch (error) {
         const details = this.getDetails(error?.response?.data || error.message);
         logger.error('[FluxAPI] Error while getting result:', details);
-        trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'poll_result' });
+        trackException(error, { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'poll_result' });
         return this.returnValue('An error occurred while retrieving the image.');
       }
     }
@@ -297,7 +297,7 @@ class FluxAPI extends Tool {
     // If no result data
     if (!resultData || !resultData.sample) {
       logger.error('[FluxAPI] No image data received from API. Response:', resultData);
-      trackException(new Error('No image data received'), { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'no_data' });
+      trackException(new Error('No image data received'), { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'no_data' });
       return this.returnValue('No image data received from Flux API.');
     }
 
@@ -333,7 +333,7 @@ class FluxAPI extends Tool {
         return [response, { content }];
       } catch (error) {
         logger.error('Error processing image for agent:', error);
-        trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'process_agent' });
+        trackException(error, { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'process_agent' });
         return this.returnValue(`Failed to process the image. ${error.message}`);
       }
     }
@@ -365,7 +365,7 @@ class FluxAPI extends Tool {
     } catch (error) {
       const details = this.getDetails(error?.message ?? 'No additional error details.');
       logger.error('Error while saving the image:', details);
-      trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_SAVE, tool: 'flux' });
+      trackException(error, { event: TelemetryEvents.ERROR_IMAGE_SAVE, tool: 'flux' });
       return this.returnValue(`Failed to save the image locally. ${details}`);
     }
   }
@@ -402,7 +402,7 @@ class FluxAPI extends Tool {
             };
           } catch (error) {
             logger.error(`[FluxAPI] Error fetching details for finetune ${finetuneId}:`, error);
-            trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'finetune_details' });
+            trackException(error, { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'finetune_details' });
             return {
               id: finetuneId,
               error: 'Failed to fetch details',
@@ -419,7 +419,7 @@ class FluxAPI extends Tool {
     } catch (error) {
       const details = this.getDetails(error?.response?.data || error.message);
       logger.error('[FluxAPI] Error while getting finetunes:', details);
-      trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'get_finetunes' });
+      trackException(error, { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'get_finetunes' });
       const errorMsg = `Failed to get finetunes: ${details}`;
       return this.isAgent ? this.returnValue([errorMsg, {}]) : new Error(errorMsg);
     }
@@ -492,7 +492,7 @@ class FluxAPI extends Tool {
     } catch (error) {
       const details = this.getDetails(error?.response?.data || error.message);
       logger.error('[FluxAPI] Error while submitting finetuned task:', details);
-      trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'submit_finetuned_task' });
+      trackException(error, { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'submit_finetuned_task' });
       return this.returnValue(
         `Something went wrong when trying to generate the finetuned image. The Flux API may be unavailable:
         Error Message: ${details}`,
@@ -523,13 +523,13 @@ class FluxAPI extends Tool {
           break;
         } else if (status === 'Error') {
           logger.error('[FluxAPI] Error in finetuned task:', resultResponse.data);
-          trackException(new Error('Flux finetuned task error'), { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'finetuned_task_error' });
+          trackException(new Error('Flux finetuned task error'), { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'finetuned_task_error' });
           return this.returnValue('An error occurred during finetuned image generation.');
         }
       } catch (error) {
         const details = this.getDetails(error?.response?.data || error.message);
         logger.error('[FluxAPI] Error while getting finetuned result:', details);
-        trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'poll_finetuned_result' });
+        trackException(error, { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'poll_finetuned_result' });
         return this.returnValue('An error occurred while retrieving the finetuned image.');
       }
     }
@@ -537,7 +537,7 @@ class FluxAPI extends Tool {
     // If no result data
     if (!resultData || !resultData.sample) {
       logger.error('[FluxAPI] No image data received from API. Response:', resultData);
-      trackException(new Error('No finetuned image data received'), { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'no_finetuned_data' });
+      trackException(new Error('No finetuned image data received'), { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'no_finetuned_data' });
       return this.returnValue('No image data received from Flux API.');
     }
 
@@ -571,7 +571,7 @@ class FluxAPI extends Tool {
         return [response, { content }];
       } catch (error) {
         logger.error('[FluxAPI] Error processing finetuned image for agent:', error);
-        trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'process_finetuned_agent' });
+        trackException(error, { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'flux', phase: 'process_finetuned_agent' });
         return this.returnValue(`Failed to process the finetuned image. ${error.message}`);
       }
     }
@@ -594,7 +594,7 @@ class FluxAPI extends Tool {
     } catch (error) {
       const details = this.getDetails(error?.message ?? 'No additional error details.');
       logger.error('Error while saving the finetuned image:', details);
-      trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_SAVE, tool: 'flux', phase: 'save_finetuned' });
+      trackException(error, { event: TelemetryEvents.ERROR_IMAGE_SAVE, tool: 'flux', phase: 'save_finetuned' });
       return this.returnValue(`Failed to save the finetuned image locally. ${details}`);
     }
   }

@@ -42,7 +42,7 @@ router.post('/', async (req, res) => {
   } catch (error) {
     // TODO: delete remote file if it exists
     logger.error('[/files/images] Error processing file:', error);
-    trackException(error, { eventType: TelemetryEvents.ERROR_FILE_UPLOAD, source: 'image' });
+    trackException(error, { event: TelemetryEvents.ERROR_FILE_UPLOAD, source: 'image' });
 
     const message = resolveUploadErrorMessage(error);
 
@@ -55,7 +55,7 @@ router.post('/', async (req, res) => {
       await fs.unlink(filepath);
     } catch (error) {
       logger.error('[/files/images] Error deleting file:', error);
-      trackException(error, { eventType: TelemetryEvents.ERROR_FILE_DELETE, source: 'image_cleanup' });
+      trackException(error, { event: TelemetryEvents.ERROR_FILE_DELETE, source: 'image_cleanup' });
     }
     res.status(500).json({ message });
   } finally {

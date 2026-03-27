@@ -23,7 +23,7 @@ router.post('/', async (req, res) => {
     res.status(201).json(preset);
   } catch (error) {
     logger.error('[/presets] error saving preset', error);
-    trackException(error, { eventType: TelemetryEvents.ERROR_PRESET, operation: 'save' });
+    trackException(error, { event: TelemetryEvents.ERROR_PRESET, operation: 'save' });
     res.status(500).send('There was an error when saving the preset');
   }
 });
@@ -43,7 +43,7 @@ router.post('/delete', async (req, res) => {
     res.status(201).json(deleteCount);
   } catch (error) {
     logger.error('[/presets/delete] error deleting presets', error);
-    trackException(error, { eventType: TelemetryEvents.ERROR_PRESET, operation: 'delete' });
+    trackException(error, { event: TelemetryEvents.ERROR_PRESET, operation: 'delete' });
     res.status(500).send('There was an error deleting the presets');
   }
 });

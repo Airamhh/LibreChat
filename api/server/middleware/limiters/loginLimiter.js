@@ -17,7 +17,7 @@ const handler = async (req, res) => {
     windowInMinutes,
   };
 
-  trackEvent(TelemetryEvents.SECURITY_RATE_LIMIT, { limitType: 'login' });
+  trackEvent(TelemetryEvents.SECURITY_RATE_LIMIT, { limit_type: 'login' });
   await logViolation(req, res, type, errorMessage, score);
   return res.status(429).json({ message });
 };

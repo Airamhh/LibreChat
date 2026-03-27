@@ -202,7 +202,7 @@ async function convertImagesToInlineData({ imageFiles, image_ids, req, fileStrat
       });
     } catch (error) {
       logger.error('[GeminiImageGen] Error processing image:', imageFile.file_id, error);
-      trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'gemini', phase: 'process_input' });
+      trackException(error, { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'gemini', phase: 'process_input' });
     }
   }
 
@@ -304,7 +304,7 @@ async function recordTokenUsage({ usageMetadata, req, userId, conversationId, mo
     );
   } catch (error) {
     logger.error('[GeminiImageGen] Error recording token usage:', error);
-    trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'gemini', phase: 'token_usage' });
+    trackException(error, { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'gemini', phase: 'token_usage' });
   }
 }
 
@@ -340,7 +340,7 @@ function createGeminiImageTool(fields = {}) {
         });
       } catch (error) {
         logger.error('[GeminiImageGen] Failed to initialize client:', error);
-        trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'gemini', phase: 'init_client' });
+        trackException(error, { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'gemini', phase: 'init_client' });
         return [
           [{ type: ContentTypes.TEXT, text: `Failed to initialize Gemini: ${error.message}` }],
           { content: [], file_ids: [] },
@@ -395,7 +395,7 @@ function createGeminiImageTool(fields = {}) {
         });
       } catch (error) {
         logger.error('[GeminiImageGen] API error:', error);
-        trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'gemini', phase: 'api_call' });
+        trackException(error, { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'gemini', phase: 'api_call' });
         return [
           [{ type: ContentTypes.TEXT, text: `Image generation failed: ${error.message}` }],
           { content: [], file_ids: [] },
@@ -464,7 +464,7 @@ function createGeminiImageTool(fields = {}) {
         model: geminiModel,
       }).catch((error) => {
         logger.error('[GeminiImageGen] Failed to record token usage:', error);
-        trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'gemini', phase: 'record_usage' });
+        trackException(error, { event: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'gemini', phase: 'record_usage' });
       });
 
       return [textResponse, { content, file_ids }];

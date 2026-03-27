@@ -90,7 +90,7 @@ class TraversaalSearch extends Tool {
       return result;
     } catch (error) {
       logger.error('Traversaal API request failed', error);
-      trackException(error, { eventType: TelemetryEvents.ERROR_SEARCH_TOOL, tool: 'traversaal' });
+      trackException(error, { event: TelemetryEvents.ERROR_SEARCH_TOOL, tool: 'traversaal' });
       return `Traversaal API request failed: ${error.message}`;
     }
   }

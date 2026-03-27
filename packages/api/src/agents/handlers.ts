@@ -157,7 +157,7 @@ export function createToolExecuteHandler(options: ToolExecuteOptions): EventHand
                 } catch (toolError) {
                   const error = toolError as Error;
                   logger.error(`[ON_TOOL_EXECUTE] Tool ${tc.name} error:`, error);
-                  trackException(error, { toolName: tc.name, agentId: agentId ?? '' });
+                  trackException(error, { event: TelemetryEvents.ERROR_TOOL_EXECUTION, toolName: tc.name, agentId: agentId ?? '' });
                   return {
                     toolCallId: tc.id,
                     status: 'error' as const,
@@ -177,7 +177,7 @@ export function createToolExecuteHandler(options: ToolExecuteOptions): EventHand
         });
       } catch (outerError) {
         logger.error('[ON_TOOL_EXECUTE] Unexpected error:', outerError);
-        trackException(outerError as Error);
+        trackException(outerError as Error, { event: TelemetryEvents.ERROR_TOOL_EXECUTION });
         reject(outerError as Error);
       }
     },

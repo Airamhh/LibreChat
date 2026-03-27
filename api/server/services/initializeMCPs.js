@@ -15,7 +15,7 @@ async function initializeMCPs() {
     createMCPServersRegistry(mongoose, appConfig?.mcpSettings?.allowedDomains);
   } catch (error) {
     logger.error('[MCP] Failed to initialize MCPServersRegistry:', error);
-    trackException(error, { eventType: TelemetryEvents.ERROR_MCP_INIT, phase: 'registry' });
+    trackException(error, { event: TelemetryEvents.ERROR_MCP_INIT, phase: 'registry' });
     throw error;
   }
 
@@ -35,7 +35,7 @@ async function initializeMCPs() {
     }
   } catch (error) {
     logger.error('[MCP] Failed to initialize MCPManager:', error);
-    trackException(error, { eventType: TelemetryEvents.ERROR_MCP_INIT, phase: 'manager' });
+    trackException(error, { event: TelemetryEvents.ERROR_MCP_INIT, phase: 'manager' });
     throw error;
   }
 }

@@ -33,7 +33,7 @@ router.post('/', async (req, res) => {
   } catch (error) {
     logger.error(`[streamAudio] user: ${req.user.id} | Failed to stream audio: ${error}`);
     trackException(error instanceof Error ? error : new Error(String(error)), {
-      eventType: TelemetryEvents.ERROR_FILE_TTS,
+      event: TelemetryEvents.ERROR_FILE_TTS,
     });
     res.status(500).json({ error: 'Failed to stream audio' });
   }

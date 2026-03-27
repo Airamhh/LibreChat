@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { logger } from '@librechat/data-schemas';
 import { generateShortLivedToken } from '~/crypto/jwt';
+import { trackException, trackEvent, TelemetryEvents } from '~/telemetry';
 
 interface DeleteRagFileParams {
 	/** The user ID. Required for authentication. If not provided, the function returns false and logs an error. */
@@ -29,6 +30,7 @@ export async function deleteRagFile({ userId, file }: DeleteRagFileParams): Prom
 
 	if (!userId) {
 		logger.error('[deleteRagFile] No user ID provided');
+		trackEvent(TelemetryEvents.ERROR_RAG_API, { operation: 'delete', reason: 'no_user_id' });
 		return false;
 	}
 
@@ -54,6 +56,10 @@ export async function deleteRagFile({ userId, file }: DeleteRagFileParams): Prom
 			return true;
 		} else {
 			logger.error('[deleteRagFile] Error deleting document from RAG API:', axiosError.message);
+			trackException(error instanceof Error ? error : new Error(axiosError.message ?? 'RAG delete failed'), {
+				event: TelemetryEvents.ERROR_RAG_API,
+				operation: 'delete',
+			});
 			return false;
 		}
 	}

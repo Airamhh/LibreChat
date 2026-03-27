@@ -9,6 +9,8 @@ const {
   createAxiosInstance,
   codeServerHttpAgent,
   codeServerHttpsAgent,
+  trackException,
+  TelemetryEvents,
 } = require('@librechat/api');
 const {
   Tools,
@@ -438,6 +440,7 @@ const primeFiles = async (options, apiKey) => {
             `Error re-uploading file ${id} in session ${session_id}: ${error.message}`,
             error,
           );
+          trackException(error, { event: TelemetryEvents.ERROR_CODE_OUTPUT, source: 'reupload' });
         }
       };
       const uploadTime = await getSessionInfo(file.metadata.fileIdentifier, apiKey);
