@@ -1,5 +1,5 @@
 const express = require('express');
-const { isEnabled } = require('@librechat/api');
+const { isEnabled, trackException, TelemetryEvents } = require('@librechat/api');
 const { logger } = require('@librechat/data-schemas');
 const {
   getSharedMessages,
@@ -34,6 +34,7 @@ if (allowSharedLinks) {
         }
       } catch (error) {
         logger.error('Error getting shared messages:', error);
+        trackException(error, { eventType: TelemetryEvents.ERROR_SHARE, operation: 'get_messages' });
         res.status(500).json({ message: 'Error getting shared messages' });
       }
     },
@@ -73,6 +74,7 @@ router.get('/', requireJwtAuth, async (req, res) => {
     });
   } catch (error) {
     logger.error('Error getting shared links:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_SHARE, operation: 'list' });
     res.status(500).json({
       message: 'Error getting shared links',
       error: error.message,
@@ -91,6 +93,7 @@ router.get('/link/:conversationId', requireJwtAuth, async (req, res) => {
     });
   } catch (error) {
     logger.error('Error getting shared link:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_SHARE, operation: 'get' });
     res.status(500).json({ message: 'Error getting shared link' });
   }
 });
@@ -106,6 +109,7 @@ router.post('/:conversationId', requireJwtAuth, async (req, res) => {
     }
   } catch (error) {
     logger.error('Error creating shared link:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_SHARE, operation: 'create' });
     res.status(500).json({ message: 'Error creating shared link' });
   }
 });
@@ -120,6 +124,7 @@ router.patch('/:shareId', requireJwtAuth, async (req, res) => {
     }
   } catch (error) {
     logger.error('Error updating shared link:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_SHARE, operation: 'update' });
     res.status(500).json({ message: 'Error updating shared link' });
   }
 });
@@ -135,6 +140,7 @@ router.delete('/:shareId', requireJwtAuth, async (req, res) => {
     return res.status(200).json(result);
   } catch (error) {
     logger.error('Error deleting shared link:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_SHARE, operation: 'delete' });
     return res.status(400).json({ message: 'Error deleting shared link' });
   }
 });

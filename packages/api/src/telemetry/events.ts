@@ -81,6 +81,60 @@ export const TelemetryEvents = {
   ERROR_MCP_CONNECTION: 'error.mcp.connection',
   /** An MCP OAuth flow failed. */
   ERROR_MCP_OAUTH: 'error.mcp.oauth',
+
+  /* ── Image generation ───────────────────────────────────────────────── */
+  /** An image generation API call (DALL-E, Gemini, Flux, Stable Diffusion) failed. */
+  ERROR_IMAGE_GENERATION: 'error.image.generation',
+  /** Saving a locally-processed image file failed. */
+  ERROR_IMAGE_SAVE: 'error.image.save',
+
+  /* ── Files ──────────────────────────────────────────────────────────── */
+  /** Listing / fetching file records failed. */
+  ERROR_FILE_LIST: 'error.file.list',
+  /** Uploading or processing an uploaded file failed. */
+  ERROR_FILE_UPLOAD: 'error.file.upload',
+  /** Downloading a file failed (code interpreter or user download). */
+  ERROR_FILE_DOWNLOAD: 'error.file.download',
+  /** Deleting a file record or the physical file failed. */
+  ERROR_FILE_DELETE: 'error.file.delete',
+  /** Streaming TTS audio to the client failed. */
+  ERROR_FILE_TTS: 'error.file.tts',
+  /** Uploading or processing an avatar image failed. */
+  ERROR_FILE_AVATAR: 'error.file.avatar',
+
+  /* ── Search tools ────────────────────────────────────────────────────── */
+  /** An external search tool API call failed (Wolfram, Azure AI Search, Traversaal, etc.). */
+  ERROR_SEARCH_TOOL: 'error.search_tool',
+
+  /* ── Tool classification ─────────────────────────────────────────────── */
+  /** Building the PTC / tool classification registry failed. */
+  ERROR_TOOL_CLASSIFICATION: 'error.tool.classification',
+
+  /* ── Data management ─────────────────────────────────────────────────── */
+  /** A prompt or prompt-group operation failed. */
+  ERROR_PROMPT: 'error.prompt',
+  /** A preset save or delete operation failed. */
+  ERROR_PRESET: 'error.preset',
+  /** A conversation-tag operation failed. */
+  ERROR_TAG: 'error.tag',
+  /** A shared-link operation failed. */
+  ERROR_SHARE: 'error.share',
+
+  /* ── Auth ────────────────────────────────────────────────────────────── */
+  /** A password-reset request or confirmation failed. */
+  ERROR_AUTH_RESET: 'error.auth.reset',
+  /** A token-refresh operation (JWT or OpenID) failed. */
+  ERROR_AUTH_REFRESH: 'error.auth.refresh',
+
+  /* ── Microsoft Graph API ─────────────────────────────────────────────── */
+  /** A Microsoft Graph API call failed. */
+  ERROR_GRAPH_API: 'error.graph_api',
+
+  /* ── Streaming / generation ──────────────────────────────────────────── */
+  /** An error occurred while reading or writing a text stream. */
+  ERROR_STREAM: 'error.stream',
+  /** BaseClient failed to save a message or map attachments during generation. */
+  ERROR_BASE_CLIENT: 'error.base_client',
 } as const;
 
 export type TelemetryEvent = (typeof TelemetryEvents)[keyof typeof TelemetryEvents];

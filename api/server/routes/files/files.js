@@ -6,6 +6,8 @@ const {
   refreshS3FileUrls,
   resolveUploadErrorMessage,
   verifyAgentUploadPermission,
+  trackException,
+  TelemetryEvents,
 } = require('@librechat/api');
 const {
   Time,
@@ -57,6 +59,7 @@ router.get('/', async (req, res) => {
     res.status(200).send(files);
   } catch (error) {
     logger.error('[/files] Error getting files:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_FILE_LIST });
     res.status(400).json({ message: 'Error in request', error: error.message });
   }
 });
@@ -113,6 +116,7 @@ router.get('/agent/:agent_id', async (req, res) => {
     res.status(200).json(files);
   } catch (error) {
     logger.error('[/files/agent/:agent_id] Error fetching agent files:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_FILE_LIST, source: 'agent' });
     res.status(500).json({ error: 'Failed to fetch agent files' });
   }
 });
@@ -123,6 +127,7 @@ router.get('/config', async (req, res) => {
     res.status(200).json(appConfig.fileConfig);
   } catch (error) {
     logger.error('[/files] Error getting fileConfig', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_FILE_LIST, source: 'config' });
     res.status(400).json({ message: 'Error in request', error: error.message });
   }
 });
@@ -256,6 +261,7 @@ router.delete('/', async (req, res) => {
     res.status(200).json({ message: 'Files deleted successfully' });
   } catch (error) {
     logger.error('[/files] Error deleting files:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_FILE_DELETE });
     res.status(400).json({ message: 'Error in request', error: error.message });
   }
 });
@@ -298,6 +304,7 @@ router.get('/code/download/:session_id/:fileId', async (req, res) => {
     response.data.pipe(res);
   } catch (error) {
     logger.error('Error downloading file:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_FILE_DOWNLOAD, source: 'code_interpreter' });
     res.status(500).send('Error downloading file');
   }
 });
@@ -358,6 +365,7 @@ router.get('/download/:userId/:file_id', fileAccess, async (req, res) => {
 
       fileStream.on('error', (streamError) => {
         logger.error('[DOWNLOAD ROUTE] Stream error:', streamError);
+        trackException(streamError, { eventType: TelemetryEvents.ERROR_FILE_DOWNLOAD, source: 'stream' });
       });
 
       setHeaders();
@@ -365,6 +373,7 @@ router.get('/download/:userId/:file_id', fileAccess, async (req, res) => {
     }
   } catch (error) {
     logger.error('[DOWNLOAD ROUTE] Error downloading file:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_FILE_DOWNLOAD });
     res.status(500).send('Error downloading file');
   }
 });
@@ -407,12 +416,14 @@ router.post('/', async (req, res) => {
   } catch (error) {
     const message = resolveUploadErrorMessage(error);
     logger.error('[/files] Error processing file:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_FILE_UPLOAD });
 
     try {
       await fs.unlink(req.file.path);
       cleanup = false;
     } catch (error) {
       logger.error('[/files] Error deleting file:', error);
+      trackException(error, { eventType: TelemetryEvents.ERROR_FILE_DELETE, source: 'cleanup' });
     }
     res.status(500).json({ message });
   } finally {
@@ -421,6 +432,7 @@ router.post('/', async (req, res) => {
         await fs.unlink(req.file.path);
       } catch (error) {
         logger.error('[/files] Error deleting file after file processing:', error);
+        trackException(error, { eventType: TelemetryEvents.ERROR_FILE_DELETE, source: 'post_upload_cleanup' });
       }
     } else {
       logger.debug('[/files] File processing completed without cleanup');

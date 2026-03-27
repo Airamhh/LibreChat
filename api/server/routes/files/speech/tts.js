@@ -1,6 +1,7 @@
 const multer = require('multer');
 const express = require('express');
 const { logger } = require('@librechat/data-schemas');
+const { trackException, TelemetryEvents } = require('@librechat/api');
 const { CacheKeys } = require('librechat-data-provider');
 const { getVoices, streamAudio, textToSpeech } = require('~/server/services/Files/Audio');
 const { getLogStores } = require('~/cache');
@@ -31,6 +32,9 @@ router.post('/', async (req, res) => {
     res.status(200).end();
   } catch (error) {
     logger.error(`[streamAudio] user: ${req.user.id} | Failed to stream audio: ${error}`);
+    trackException(error instanceof Error ? error : new Error(String(error)), {
+      eventType: TelemetryEvents.ERROR_FILE_TTS,
+    });
     res.status(500).json({ error: 'Failed to stream audio' });
   }
 });

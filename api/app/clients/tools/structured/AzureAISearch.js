@@ -1,5 +1,6 @@
 const { Tool } = require('@langchain/core/tools');
 const { logger } = require('@librechat/data-schemas');
+const { trackException, TelemetryEvents } = require('@librechat/api');
 const { SearchClient, AzureKeyCredential } = require('@azure/search-documents');
 
 const azureAISearchJsonSchema = {
@@ -107,6 +108,7 @@ class AzureAISearch extends Tool {
       return JSON.stringify(resultDocuments);
     } catch (error) {
       logger.error('Azure AI Search request failed', error);
+      trackException(error, { eventType: TelemetryEvents.ERROR_SEARCH_TOOL, tool: 'azure_ai_search' });
       return 'There was an error with Azure AI Search.';
     }
   }

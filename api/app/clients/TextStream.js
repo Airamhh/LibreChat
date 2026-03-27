@@ -1,5 +1,6 @@
 const { Readable } = require('stream');
 const { logger } = require('@librechat/data-schemas');
+const { trackException, TelemetryEvents } = require('@librechat/api');
 
 class TextStream extends Readable {
   constructor(text, options = {}) {
@@ -52,6 +53,7 @@ class TextStream extends Readable {
       await streamPromise;
     } catch (err) {
       logger.error('[processTextStream] Error in text stream:', err);
+      trackException(err, { eventType: TelemetryEvents.ERROR_STREAM });
       // Handle the error appropriately, e.g., return an error message or throw an error
     }
   }

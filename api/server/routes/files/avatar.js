@@ -1,6 +1,7 @@
 const fs = require('fs').promises;
 const express = require('express');
 const { logger } = require('@librechat/data-schemas');
+const { trackException, TelemetryEvents } = require('@librechat/api');
 const { getStrategyFunctions } = require('~/server/services/Files/strategies');
 const { resizeAvatar } = require('~/server/services/Files/images/avatar');
 const { getFileStrategy } = require('~/server/utils/getFileStrategy');
@@ -35,6 +36,7 @@ router.post('/', async (req, res) => {
   } catch (error) {
     const message = 'An error occurred while uploading the profile picture';
     logger.error(message, error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_FILE_AVATAR });
     res.status(500).json({ message });
   } finally {
     try {

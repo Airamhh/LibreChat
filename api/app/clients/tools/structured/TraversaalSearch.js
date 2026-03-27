@@ -1,5 +1,6 @@
 const { Tool } = require('@langchain/core/tools');
 const { logger } = require('@librechat/data-schemas');
+const { trackException, TelemetryEvents } = require('@librechat/api');
 const { getEnvironmentVariable } = require('@langchain/core/utils/env');
 
 const traversaalSearchJsonSchema = {
@@ -89,6 +90,7 @@ class TraversaalSearch extends Tool {
       return result;
     } catch (error) {
       logger.error('Traversaal API request failed', error);
+      trackException(error, { eventType: TelemetryEvents.ERROR_SEARCH_TOOL, tool: 'traversaal' });
       return `Traversaal API request failed: ${error.message}`;
     }
   }

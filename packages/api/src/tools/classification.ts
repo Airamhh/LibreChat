@@ -14,6 +14,8 @@ import {
   createProgrammaticToolCallingTool,
   ProgrammaticToolCallingDefinition,
 } from '@librechat/agents';
+import { trackException } from '~/telemetry';
+import { TelemetryEvents } from '~/telemetry/events';
 import type { AgentToolOptions } from 'librechat-data-provider';
 import type {
   LCToolRegistry,
@@ -382,6 +384,9 @@ export async function buildToolClassification(
     logger.debug(`[buildToolClassification] PTC tool enabled for agent ${agentId}`);
   } catch (error) {
     logger.error('[buildToolClassification] Error creating PTC tool:', error);
+    trackException(error instanceof Error ? error : new Error(String(error)), {
+      eventType: TelemetryEvents.ERROR_TOOL_CLASSIFICATION,
+    });
   }
 
   return { toolRegistry, toolDefinitions, additionalTools, hasDeferredTools };

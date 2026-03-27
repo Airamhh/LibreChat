@@ -1,6 +1,6 @@
 const express = require('express');
 const { logger } = require('@librechat/data-schemas');
-const { generateCheckAccess } = require('@librechat/api');
+const { generateCheckAccess, trackException, TelemetryEvents } = require('@librechat/api');
 const { PermissionTypes, Permissions } = require('librechat-data-provider');
 const {
   updateTagsForConversation,
@@ -39,6 +39,7 @@ router.get('/', async (req, res) => {
     }
   } catch (error) {
     logger.error('Error getting conversation tags:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_TAG, operation: 'list' });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -55,6 +56,7 @@ router.post('/', async (req, res) => {
     res.status(200).json(tag);
   } catch (error) {
     logger.error('Error creating conversation tag:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_TAG, operation: 'create' });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -76,6 +78,7 @@ router.put('/:tag', async (req, res) => {
     }
   } catch (error) {
     logger.error('Error updating conversation tag:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_TAG, operation: 'update' });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -97,6 +100,7 @@ router.delete('/:tag', async (req, res) => {
     }
   } catch (error) {
     logger.error('Error deleting conversation tag:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_TAG, operation: 'delete' });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -117,6 +121,7 @@ router.put('/convo/:conversationId', async (req, res) => {
     res.status(200).json(conversationTags);
   } catch (error) {
     logger.error('Error updating conversation tags', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_TAG, operation: 'update_convo_tags' });
     res.status(500).send('Error updating conversation tags');
   }
 });

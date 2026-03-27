@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const express = require('express');
 const { logger } = require('@librechat/data-schemas');
+const { trackException, TelemetryEvents } = require('@librechat/api');
 const { getPresets, savePreset, deletePresets } = require('~/models');
 const requireJwtAuth = require('~/server/middleware/requireJwtAuth');
 
@@ -22,6 +23,7 @@ router.post('/', async (req, res) => {
     res.status(201).json(preset);
   } catch (error) {
     logger.error('[/presets] error saving preset', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_PRESET, operation: 'save' });
     res.status(500).send('There was an error when saving the preset');
   }
 });
@@ -41,6 +43,7 @@ router.post('/delete', async (req, res) => {
     res.status(201).json(deleteCount);
   } catch (error) {
     logger.error('[/presets/delete] error deleting presets', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_PRESET, operation: 'delete' });
     res.status(500).send('There was an error deleting the presets');
   }
 });

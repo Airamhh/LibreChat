@@ -4,7 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const { ProxyAgent, fetch } = require('undici');
 const { Tool } = require('@langchain/core/tools');
 const { logger } = require('@librechat/data-schemas');
-const { getImageBasename, extractBaseURL } = require('@librechat/api');
+const { getImageBasename, extractBaseURL, trackException, TelemetryEvents } = require('@librechat/api');
 const { FileContext, ContentTypes } = require('librechat-data-provider');
 
 const dalle3JsonSchema = {
@@ -159,6 +159,7 @@ class DALLE3 extends Tool {
       });
     } catch (error) {
       logger.error('[DALL-E-3] Problem generating the image:', error);
+      trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_GENERATION, tool: 'dalle3' });
       return this
         .returnValue(`Something went wrong when trying to generate the image. The DALL-E API may be unavailable:
 Error Message: ${error.message}`);
@@ -237,6 +238,7 @@ Error Message: ${error.message}`);
       }
     } catch (error) {
       logger.error('Error while saving the image:', error);
+      trackException(error, { eventType: TelemetryEvents.ERROR_IMAGE_SAVE, tool: 'dalle3' });
       this.result = `Failed to save the image locally. ${error.message}`;
     }
 

@@ -10,6 +10,8 @@ const {
   encodeAndFormatAudios,
   encodeAndFormatVideos,
   encodeAndFormatDocuments,
+  trackException,
+  TelemetryEvents,
 } = require('@librechat/api');
 const {
   Constants,
@@ -490,6 +492,7 @@ class BaseClient {
       userMessagePromise = this.saveMessageToDatabase(userMessage, saveOptions, user).catch(
         (err) => {
           logger.error('[BaseClient] Failed to save user message:', err);
+          trackException(err, { eventType: TelemetryEvents.ERROR_BASE_CLIENT, phase: 'save_user_message' });
           return {};
         },
       );
@@ -647,6 +650,7 @@ class BaseClient {
         saveOptions.files = this.options.attachments.map((attachments) => attachments.file_id);
       } catch (error) {
         logger.error('[BaseClient] Error mapping attachments for conversation', error);
+        trackException(error, { eventType: TelemetryEvents.ERROR_BASE_CLIENT, phase: 'map_attachments' });
       }
     }
 

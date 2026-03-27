@@ -2,7 +2,7 @@ const cookies = require('cookie');
 const jwt = require('jsonwebtoken');
 const openIdClient = require('openid-client');
 const { logger } = require('@librechat/data-schemas');
-const { isEnabled, findOpenIDUser, trackEvent, TelemetryEvents } = require('@librechat/api');
+const { isEnabled, findOpenIDUser, trackEvent, trackException, TelemetryEvents } = require('@librechat/api');
 const {
   requestPasswordReset,
   setOpenIDAuthTokens,
@@ -47,6 +47,7 @@ const resetPasswordRequestController = async (req, res) => {
     }
   } catch (e) {
     logger.error('[resetPasswordRequestController]', e);
+    trackException(e, { eventType: TelemetryEvents.ERROR_AUTH_RESET, phase: 'request' });
     return res.status(400).json({ message: e.message });
   }
 };
@@ -66,6 +67,7 @@ const resetPasswordController = async (req, res) => {
     }
   } catch (e) {
     logger.error('[resetPasswordController]', e);
+    trackException(e, { eventType: TelemetryEvents.ERROR_AUTH_RESET, phase: 'confirm' });
     return res.status(400).json({ message: e.message });
   }
 };
@@ -129,6 +131,7 @@ const refreshController = async (req, res) => {
       return res.status(200).send({ token, user: safeUser });
     } catch (error) {
       logger.error('[refreshController] OpenID token refresh error', error);
+      trackException(error, { eventType: TelemetryEvents.ERROR_AUTH_REFRESH, phase: 'openid' });
       return res.status(403).send('Invalid OpenID refresh token');
     }
   }
@@ -176,6 +179,7 @@ const refreshController = async (req, res) => {
     }
   } catch (err) {
     logger.error(`[refreshController] Invalid refresh token:`, err);
+    trackException(err, { eventType: TelemetryEvents.ERROR_AUTH_REFRESH, phase: 'jwt' });
     res.status(403).send('Invalid refresh token');
   }
 };
@@ -215,6 +219,7 @@ const graphTokenController = async (req, res) => {
     res.json(tokenResponse);
   } catch (error) {
     logger.error('[graphTokenController] Failed to obtain Graph API token:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_GRAPH_API, phase: 'token_exchange' });
     res.status(500).json({
       message: 'Failed to obtain Microsoft Graph token',
     });

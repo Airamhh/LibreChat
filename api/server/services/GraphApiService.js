@@ -1,5 +1,5 @@
 const client = require('openid-client');
-const { isEnabled } = require('@librechat/api');
+const { isEnabled, trackException, TelemetryEvents } = require('@librechat/api');
 const { logger } = require('@librechat/data-schemas');
 const { CacheKeys } = require('librechat-data-provider');
 const { Client } = require('@microsoft/microsoft-graph-client');
@@ -47,6 +47,7 @@ const createGraphClient = async (accessToken, sub) => {
     return graphClient;
   } catch (error) {
     logger.error('[createGraphClient] Error creating Graph client:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_GRAPH_API, phase: 'create_client' });
     throw error;
   }
 };
@@ -96,6 +97,7 @@ const exchangeTokenForGraphAccess = async (config, accessToken, sub) => {
     return grantResponse.access_token;
   } catch (error) {
     logger.error('[exchangeTokenForGraphAccess] Token exchange failed:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_GRAPH_API, phase: 'token_exchange' });
     throw error;
   }
 };
@@ -463,6 +465,7 @@ const testGraphApiAccess = async (accessToken, sub) => {
     return results;
   } catch (error) {
     logger.error('[testGraphApiAccess] Error testing Graph API access:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_GRAPH_API, phase: 'test_access' });
     return {
       userAccess: false,
       peopleAccess: false,
