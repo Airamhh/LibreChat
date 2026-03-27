@@ -64,14 +64,12 @@ export default function usePinnedConversations() {
       isMutatingRef.current = true;
       try {
         await updatePinnedConversationsMutation.mutateAsync(cleaned);
+        isMutatingRef.current = false;
       } catch (error) {
         logger.error('Error updating pinned conversations:', error);
         showToast({ message: getErrorMessage(error), status: 'error' });
         getPinnedConversationsQuery.refetch();
-      } finally {
-        setTimeout(() => {
-          isMutatingRef.current = false;
-        }, 100);
+        isMutatingRef.current = false;
       }
     },
     [setPinnedConversations, updatePinnedConversationsMutation, showToast, getErrorMessage, getPinnedConversationsQuery],
@@ -122,14 +120,12 @@ export default function usePinnedConversations() {
         isMutatingRef.current = true;
         try {
           await updatePinnedConversationsMutation.mutateAsync(cleaned);
+          isMutatingRef.current = false;
         } catch (error) {
           logger.error('Error reordering pinned conversations:', error);
           showToast({ message: getErrorMessage(error), status: 'error' });
           getPinnedConversationsQuery.refetch();
-        } finally {
-          setTimeout(() => {
-            isMutatingRef.current = false;
-          }, 100);
+          isMutatingRef.current = false;
         }
       }
     },

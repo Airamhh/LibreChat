@@ -32,6 +32,9 @@ export const useUpdatePinnedConversationsMutation = () => {
 
         return { previousPinnedConversations };
       },
+      onSuccess: (data) => {
+        queryClient.setQueryData(['pinnedConversations'], data);
+      },
       onError: (_err, _newPinnedConversations, context) => {
         if (context?.previousPinnedConversations) {
           queryClient.setQueryData(['pinnedConversations'], context.previousPinnedConversations);

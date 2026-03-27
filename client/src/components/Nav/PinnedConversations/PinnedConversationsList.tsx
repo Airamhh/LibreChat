@@ -234,7 +234,7 @@ export default function PinnedConversationsList({
 
   if (isPinnedLoading) {
     return (
-      <div className="mb-2 flex flex-col px-3 pb-2">
+      <div className="mb-2 flex flex-col pb-2">
         <div className="mt-1 flex flex-col gap-1">
           <PinnedConversationSkeleton />
         </div>
@@ -243,7 +243,7 @@ export default function PinnedConversationsList({
   }
 
   return (
-    <div className="mb-2 flex flex-col px-3">
+    <div className="mb-2 flex flex-col">
       <div className="mt-1 flex flex-col gap-1">
         {isConversationsLoading ? (
           <>
