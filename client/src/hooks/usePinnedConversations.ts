@@ -78,12 +78,20 @@ export default function usePinnedConversations() {
   );
 
   const addPinnedConversation = (conversationId: string) => {
-    if (pinnedConversations.some((pc) => pc.conversationId === conversationId)) return;
+    if (!conversationId) {
+      return;
+    }
+    if (pinnedConversations.some((pc) => pc.conversationId === conversationId)) {
+      return;
+    }
     const newPinnedConversations = [...pinnedConversations, { conversationId }];
     savePinnedConversations(newPinnedConversations);
   };
 
   const removePinnedConversation = (conversationId: string) => {
+    if (!conversationId) {
+      return;
+    }
     const newPinnedConversations = pinnedConversations.filter((pc) => pc.conversationId !== conversationId);
     savePinnedConversations(newPinnedConversations);
   };
@@ -96,6 +104,9 @@ export default function usePinnedConversations() {
   };
 
   const togglePinnedConversation = (conversationId: string) => {
+    if (!conversationId) {
+      return;
+    }
     if (isPinnedConversation(conversationId)) {
       removePinnedConversation(conversationId);
     } else {
