@@ -28,6 +28,7 @@ export { default as useNewConvo } from './useNewConvo';
 export { default as useLocalize } from './useLocalize';
 export { default as useFocusTrap } from './useFocusTrap';
 export { default as useFavorites } from './useFavorites';
+export { default as usePinnedConversations } from './usePinnedConversations';
 export { default as useChatBadges } from './useChatBadges';
 export { default as useScrollToRef } from './useScrollToRef';
 export { default as useLocalStorage } from './useLocalStorage';

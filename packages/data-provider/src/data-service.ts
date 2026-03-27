@@ -39,6 +39,22 @@ export function updateFavorites(favorites: FavoriteItem[]): Promise<FavoriteItem
   return request.post(`${endpoints.apiBaseUrl()}/api/user/settings/favorites`, { favorites });
 }
 
+export type PinnedConversationItem = {
+  conversationId: string;
+};
+
+export function getPinnedConversations(): Promise<PinnedConversationItem[]> {
+  return request.get(`${endpoints.apiBaseUrl()}/api/user/settings/pinnedConversations`);
+}
+
+export function updatePinnedConversations(
+  pinnedConversations: PinnedConversationItem[],
+): Promise<PinnedConversationItem[]> {
+  return request.post(`${endpoints.apiBaseUrl()}/api/user/settings/pinnedConversations`, {
+    pinnedConversations,
+  });
+}
+
 export function getSharedMessages(shareId: string): Promise<t.TSharedMessagesResponse> {
   return request.get(endpoints.shareMessages(shareId));
 }
