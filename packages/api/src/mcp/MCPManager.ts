@@ -3,6 +3,8 @@ import { logger } from '@librechat/data-schemas';
 import { CallToolResultSchema, ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
 import type { RequestOptions } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import type { TokenMethods, IUser } from '@librechat/data-schemas';
+import { trackException } from '~/telemetry';
+import { TelemetryEvents } from '~/telemetry/events';
 import type { GraphTokenResolver } from '~/utils/graph';
 import type { FlowStateManager } from '~/flow/manager';
 import type { MCPOAuthTokens } from './oauth';
@@ -347,6 +349,11 @@ Please follow these instructions when using tools from the respective MCP server
     } catch (error) {
       // Log with context and re-throw or handle as needed
       logger.error(`${logPrefix}[${toolName}] Tool call failed`, error);
+      trackException(error instanceof Error ? error : new Error(String(error)), {
+        serverName,
+        toolName,
+        event: TelemetryEvents.ERROR_MCP_TOOL_CALL,
+      });
       // Rethrowing allows the caller (createMCPTool) to handle the final user message
       throw error;
     }

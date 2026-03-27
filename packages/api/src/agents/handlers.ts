@@ -9,6 +9,8 @@ import type {
   ToolExecuteBatchRequest,
 } from '@librechat/agents';
 import type { StructuredToolInterface } from '@langchain/core/tools';
+import { trackException, trackEvent } from '~/telemetry';
+import { TelemetryEvents } from '~/telemetry/events';
 import { runOutsideTracing } from '~/utils';
 
 export interface ToolEndCallbackData {
@@ -155,6 +157,7 @@ export function createToolExecuteHandler(options: ToolExecuteOptions): EventHand
                 } catch (toolError) {
                   const error = toolError as Error;
                   logger.error(`[ON_TOOL_EXECUTE] Tool ${tc.name} error:`, error);
+                  trackException(error, { toolName: tc.name, agentId: agentId ?? '' });
                   return {
                     toolCallId: tc.id,
                     status: 'error' as const,
@@ -168,11 +171,13 @@ export function createToolExecuteHandler(options: ToolExecuteOptions): EventHand
             resolve(results);
           } catch (error) {
             logger.error('[ON_TOOL_EXECUTE] Fatal error:', error);
+            trackEvent(TelemetryEvents.ERROR_TOOL_LOADING, { agentId: agentId ?? '' });
             reject(error as Error);
           }
         });
       } catch (outerError) {
         logger.error('[ON_TOOL_EXECUTE] Unexpected error:', outerError);
+        trackException(outerError as Error);
         reject(outerError as Error);
       }
     },

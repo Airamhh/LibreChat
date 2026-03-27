@@ -10,6 +10,8 @@ import type {
 } from './transactions';
 import type { UsageMetadata } from '~/stream/interfaces/IJobStore';
 import type { EndpointTokenConfig } from '~/types/tokens';
+import { trackException } from '~/telemetry';
+import { TelemetryEvents } from '~/telemetry/events';
 import {
   prepareStructuredTokenSpend,
   bulkWriteTransactions,
@@ -171,6 +173,10 @@ export async function recordCollectedUsage(
               `[packages/api #recordCollectedUsage] Error spending structured ${usageContext} tokens`,
               err,
             );
+            trackException(err instanceof Error ? err : new Error(String(err)), {
+              event: TelemetryEvents.ERROR_AGENT_USAGE,
+              usageContext,
+            });
           });
         continue;
       }
@@ -185,6 +191,10 @@ export async function recordCollectedUsage(
             `[packages/api #recordCollectedUsage] Error spending ${usageContext} tokens`,
             err,
           );
+          trackException(err instanceof Error ? err : new Error(String(err)), {
+            event: TelemetryEvents.ERROR_AGENT_USAGE,
+            usageContext,
+          });
         });
     }
   };
@@ -197,6 +207,10 @@ export async function recordCollectedUsage(
       await bulkWriteTransactions({ user, docs: allDocs }, bulkWriteOps);
     } catch (err) {
       logger.error('[packages/api #recordCollectedUsage] Error in bulk write', err);
+      trackException(err instanceof Error ? err : new Error(String(err)), {
+        event: TelemetryEvents.ERROR_AGENT_USAGE,
+        usageContext: 'bulk_write',
+      });
     }
   }
 

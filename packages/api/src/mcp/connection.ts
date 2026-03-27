@@ -16,6 +16,8 @@ import type {
   RequestInfo as UndiciRequestInfo,
   Response as UndiciResponse,
 } from 'undici';
+import { trackEvent, trackException } from '~/telemetry';
+import { TelemetryEvents } from '~/telemetry/events';
 import type { MCPOAuthTokens } from './oauth/types';
 import type * as t from './types';
 import { createSSRFSafeUndiciConnect, resolveHostnameSSRF } from '~/auth';
@@ -728,6 +730,10 @@ export class MCPConnection extends EventEmitter {
           return;
         } catch (error) {
           logger.error(`${this.getLogPrefix()} Reconnection attempt failed:`, error);
+          trackEvent(TelemetryEvents.ERROR_MCP_CONNECTION, {
+            serverName: this.serverName,
+            phase: 'reconnect',
+          });
 
           // Stop immediately if rate limited - retrying will only make it worse
           if (this.isRateLimitError(error)) {
@@ -917,6 +923,10 @@ export class MCPConnection extends EventEmitter {
             // OAuth failed or timed out
             this.oauthRequired = false;
             logger.error(`${this.getLogPrefix()} OAuth handling failed:`, oauthError);
+            trackException(oauthError instanceof Error ? oauthError : new Error(String(oauthError)), {
+              serverName: this.serverName,
+              event: TelemetryEvents.ERROR_MCP_OAUTH,
+            });
             // Re-throw the original authentication error
             throw error;
           }
@@ -982,6 +992,10 @@ export class MCPConnection extends EventEmitter {
       }
     } catch (error) {
       logger.error(`${this.getLogPrefix()} Connection failed:`, error);
+      trackException(error instanceof Error ? error : new Error(String(error)), {
+        event: TelemetryEvents.ERROR_MCP_CONNECTION,
+        serverName: this.serverName,
+      });
       throw error;
     }
   }

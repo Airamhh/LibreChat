@@ -1,5 +1,5 @@
 const express = require('express');
-const { isEnabled, GenerationJobManager } = require('@librechat/api');
+const { isEnabled, GenerationJobManager, trackException, TelemetryEvents } = require('@librechat/api');
 const { logger } = require('@librechat/data-schemas');
 const {
   uaParser,
@@ -275,6 +275,7 @@ router.post('/chat/abort', async (req, res) => {
         logger.debug(`[AgentStream] Saved partial response for: ${jobStreamId}`);
       } catch (saveError) {
         logger.error(`[AgentStream] Failed to save partial response: ${saveError.message}`);
+        trackException(saveError, { eventType: TelemetryEvents.ERROR_AGENT_PARTIAL_SAVE });
       }
     }
 

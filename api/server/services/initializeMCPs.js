@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { logger } = require('@librechat/data-schemas');
+const { trackException, TelemetryEvents } = require('@librechat/api');
 const { mergeAppTools, getAppConfig } = require('./Config');
 const { createMCPServersRegistry, createMCPManager } = require('~/config');
 
@@ -14,6 +15,7 @@ async function initializeMCPs() {
     createMCPServersRegistry(mongoose, appConfig?.mcpSettings?.allowedDomains);
   } catch (error) {
     logger.error('[MCP] Failed to initialize MCPServersRegistry:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_MCP_INIT, phase: 'registry' });
     throw error;
   }
 
@@ -33,6 +35,7 @@ async function initializeMCPs() {
     }
   } catch (error) {
     logger.error('[MCP] Failed to initialize MCPManager:', error);
+    trackException(error, { eventType: TelemetryEvents.ERROR_MCP_INIT, phase: 'manager' });
     throw error;
   }
 }

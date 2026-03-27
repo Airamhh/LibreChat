@@ -18,6 +18,8 @@ import type { ObjectId, MemoryMethods, IUser } from '@librechat/data-schemas';
 import type { TAttachment, MemoryArtifact } from 'librechat-data-provider';
 import type { BaseMessage, ToolMessage } from '@langchain/core/messages';
 import type { Response as ServerResponse } from 'express';
+import { trackException } from '~/telemetry';
+import { TelemetryEvents } from '~/telemetry/events';
 import { GenerationJobManager } from '~/stream/GenerationJobManager';
 import { resolveHeaders, createSafeUser } from '~/utils';
 import Tokenizer from '~/utils/tokenizer';
@@ -163,6 +165,10 @@ export const createMemoryTool = ({
         return [`Failed to set memory for key "${key}"`, undefined];
       } catch (error) {
         logger.error('Memory Agent failed to set memory', error);
+        trackException(error instanceof Error ? error : new Error(String(error)), {
+          event: TelemetryEvents.ERROR_AGENT_MEMORY,
+          operation: 'set',
+        });
         return [`Error setting memory for key "${key}"`, undefined];
       }
     },
@@ -228,6 +234,10 @@ const createDeleteMemoryTool = ({
         return [`Failed to delete memory for key "${key}"`, undefined];
       } catch (error) {
         logger.error('Memory Agent failed to delete memory', error);
+        trackException(error instanceof Error ? error : new Error(String(error)), {
+          event: TelemetryEvents.ERROR_AGENT_MEMORY,
+          operation: 'delete',
+        });
         return [`Error deleting memory for key "${key}"`, undefined];
       }
     },
@@ -491,6 +501,9 @@ ${memory ?? 'No existing memories'}`;
       `[MemoryAgent] Failed to process memory | userId: ${userId} | conversationId: ${conversationId} | messageId: ${messageId}`,
       { error },
     );
+    trackException(error instanceof Error ? error : new Error(String(error)), {
+      event: TelemetryEvents.ERROR_AGENT_MEMORY_PROCESS,
+    });
   }
 }
 
@@ -543,6 +556,9 @@ export async function createMemoryProcessor({
         });
       } catch (error) {
         logger.error('Memory Agent failed to process memory', error);
+        trackException(error instanceof Error ? error : new Error(String(error)), {
+          event: TelemetryEvents.ERROR_AGENT_MEMORY_PROCESS,
+        });
       }
     },
   ];

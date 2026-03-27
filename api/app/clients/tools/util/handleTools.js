@@ -13,6 +13,8 @@ const {
   loadWebSearchAuth,
   buildImageToolContext,
   buildWebSearchContext,
+  trackException,
+  TelemetryEvents,
 } = require('@librechat/api');
 const { getMCPServersRegistry } = require('~/config');
 const {
@@ -106,6 +108,9 @@ const validateTools = async (user, tools = []) => {
     return Array.from(validToolsSet.values());
   } catch (err) {
     logger.error('[validateTools] There was a problem validating tools', err);
+    trackException(err instanceof Error ? err : new Error(String(err)), {
+      event: TelemetryEvents.ERROR_TOOL_VALIDATION,
+    });
     throw new Error(err);
   }
 };
@@ -407,6 +412,7 @@ const loadTools = async ({
       toolPromises.push(
         validTool().catch((error) => {
           logger.error(`Error loading tool ${tool}:`, error);
+          trackException(error, { eventType: TelemetryEvents.ERROR_TOOL_LOADING, tool });
           return null;
         }),
       );
@@ -446,6 +452,10 @@ const loadTools = async ({
           mcpToolPromises.push(
             createMCPTools(mcpParams).catch((error) => {
               logger.error(`Error loading ${serverName} tools:`, error);
+              trackException(error, {
+                event: TelemetryEvents.ERROR_TOOL_LOADING,
+                serverName,
+              });
               return null;
             }),
           );
@@ -456,6 +466,11 @@ const loadTools = async ({
             availableTools = await getMCPServerTools(safeUser.id, serverName);
           } catch (error) {
             logger.error(`Error fetching available tools for MCP server ${serverName}:`, error);
+            trackException(error, {
+              event: TelemetryEvents.ERROR_TOOL_LOADING,
+              serverName,
+              phase: 'fetch_tools',
+            });
           }
         }
 
@@ -481,6 +496,11 @@ const loadTools = async ({
         }
       } catch (error) {
         logger.error(`Error loading MCP tool for server ${serverName}:`, error);
+        trackException(error, {
+          event: TelemetryEvents.ERROR_TOOL_LOADING,
+          serverName,
+          phase: 'load_mcp_tool',
+        });
       }
     }
   }

@@ -71,7 +71,7 @@ describe('telemetry', () => {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { setupTelemetry, getTelemetryClient } = require('./index') as typeof import('./index');
         setupTelemetry();
-        expect((logger.warn as jest.Mock).mock.calls.length).toBeGreaterThan(0);
+        expect(logger.warn as jest.Mock).toHaveBeenCalled();
         expect(getTelemetryClient()).toBeNull();
       });
     });

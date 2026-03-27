@@ -2,7 +2,7 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { logger } = require('@librechat/data-schemas');
 const { ContentTypes } = require('librechat-data-provider');
-const { unescapeLaTeX, countTokens } = require('@librechat/api');
+const { unescapeLaTeX, countTokens, trackException, TelemetryEvents } = require('@librechat/api');
 const { findAllArtifacts, replaceArtifactContent } = require('~/server/services/Artifacts/update');
 const { requireJwtAuth, validateMessageReq } = require('~/server/middleware');
 const db = require('~/models');
@@ -89,6 +89,7 @@ router.get('/', async (req, res) => {
     res.status(200).json(response);
   } catch (error) {
     logger.error('Error fetching messages:', error);
+    trackException(error, { operation: 'fetch', eventType: TelemetryEvents.ERROR_MESSAGE_FETCH });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -180,6 +181,7 @@ router.post('/branch', async (req, res) => {
     res.status(201).json(savedMessage);
   } catch (error) {
     logger.error('Error creating branch message:', error);
+    trackException(error, { operation: 'branch', eventType: TelemetryEvents.ERROR_MESSAGE_SAVE });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -261,6 +263,7 @@ router.post('/artifact/:messageId', async (req, res) => {
     });
   } catch (error) {
     logger.error('Error editing artifact:', error);
+    trackException(error, { operation: 'artifact', eventType: TelemetryEvents.ERROR_MESSAGE_ARTIFACT });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -273,6 +276,7 @@ router.get('/:conversationId', validateMessageReq, async (req, res) => {
     res.status(200).json(messages);
   } catch (error) {
     logger.error('Error fetching messages:', error);
+    trackException(error, { operation: 'fetch_by_convo', eventType: TelemetryEvents.ERROR_MESSAGE_FETCH });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -297,6 +301,7 @@ router.post('/:conversationId', validateMessageReq, async (req, res) => {
     res.status(201).json(savedMessage);
   } catch (error) {
     logger.error('Error saving message:', error);
+    trackException(error, { operation: 'save', eventType: TelemetryEvents.ERROR_MESSAGE_SAVE });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -311,6 +316,7 @@ router.get('/:conversationId/:messageId', validateMessageReq, async (req, res) =
     res.status(200).json(message);
   } catch (error) {
     logger.error('Error fetching message:', error);
+    trackException(error, { operation: 'fetch_one', eventType: TelemetryEvents.ERROR_MESSAGE_FETCH });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -370,6 +376,7 @@ router.put('/:conversationId/:messageId', validateMessageReq, async (req, res) =
     return res.status(200).json(result);
   } catch (error) {
     logger.error('Error updating message:', error);
+    trackException(error, { operation: 'update', eventType: TelemetryEvents.ERROR_MESSAGE_UPDATE });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -395,6 +402,7 @@ router.put('/:conversationId/:messageId/feedback', validateMessageReq, async (re
     });
   } catch (error) {
     logger.error('Error updating message feedback:', error);
+    trackException(error, { operation: 'feedback', eventType: TelemetryEvents.ERROR_MESSAGE_UPDATE });
     res.status(500).json({ error: 'Failed to update feedback' });
   }
 });
@@ -406,6 +414,7 @@ router.delete('/:conversationId/:messageId', validateMessageReq, async (req, res
     res.status(204).send();
   } catch (error) {
     logger.error('Error deleting message:', error);
+    trackException(error, { operation: 'delete', eventType: TelemetryEvents.ERROR_MESSAGE_DELETE });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
