@@ -45,7 +45,7 @@ function ConvoOptions({
   const { data: startupConfig } = useGetStartupConfig();
   const { navigateToConvo } = useNavigateToConvo(index);
   const { showToast } = useToastContext();
-  const { isPinnedConversation, togglePinnedConversation } = usePinnedConversations();
+  const { isPinnedConversation, togglePinnedConversation, pinnedConversations } = usePinnedConversations();
 
   const navigate = useNavigate();
   const { conversationId: currentConvoId } = useParams();
@@ -192,7 +192,7 @@ function ConvoOptions({
 
   const isPinned = useMemo(
     () => isPinnedConversation(conversationId),
-    [isPinnedConversation, conversationId],
+    [isPinnedConversation, conversationId, pinnedConversations],
   );
 
   const dropdownItems = useMemo(

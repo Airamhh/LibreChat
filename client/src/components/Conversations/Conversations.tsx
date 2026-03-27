@@ -108,7 +108,11 @@ interface ChatsHeaderProps {
 /** Collapsible header for the Chats section */
 const ChatsHeader: FC<ChatsHeaderProps> = memo(({ isExpanded, onToggle }) => {
   const localize = useLocalize();
-  return <SectionHeader label={localize('com_ui_chats')} isExpanded={isExpanded} onToggle={onToggle} />;
+  return (
+    <div className="mt-2">
+      <SectionHeader label={localize('com_ui_chats')} isExpanded={isExpanded} onToggle={onToggle} />
+    </div>
+  );
 });
 
 ChatsHeader.displayName = 'ChatsHeader';
