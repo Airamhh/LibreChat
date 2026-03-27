@@ -1,4 +1,4 @@
-import { createTabIsolatedAtom } from '~/store/utils/tabManager';
+import { createTabIsolatedAtom } from './jotai-utils';
 
 export type PinnedConversation = {
   conversationId: string;
