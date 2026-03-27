@@ -12,6 +12,12 @@ jest.mock('@librechat/data-schemas', () => ({
   },
 }));
 
+// Mock telemetry so tests run without an Application Insights connection string
+jest.mock('~/telemetry', () => ({
+  trackEvent: jest.fn(),
+  trackException: jest.fn(),
+}));
+
 describe('ErrorController', () => {
   let mockReq: Request;
   let mockRes: Response;

@@ -49,6 +49,8 @@ export * from './cache';
 export * from './stream';
 /* Diagnostics */
 export { memoryDiagnostics } from './utils/memory';
+/* Telemetry */
+export * from './telemetry';
 /* types */
 export type * from './mcp/types';
 export type * from './flow/types';

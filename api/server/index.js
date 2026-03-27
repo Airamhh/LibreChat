@@ -2,6 +2,10 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 require('module-alias')({ base: path.resolve(__dirname, '..') });
+// Initialise Application Insights before other modules so that
+// auto-instrumentation hooks are registered at module load time.
+const { setupTelemetry } = require('@librechat/api');
+setupTelemetry();
 const cors = require('cors');
 const axios = require('axios');
 const express = require('express');

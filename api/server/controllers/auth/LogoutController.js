@@ -1,5 +1,5 @@
 const cookies = require('cookie');
-const { isEnabled } = require('@librechat/api');
+const { isEnabled, trackEvent, TelemetryEvents } = require('@librechat/api');
 const { logger } = require('@librechat/data-schemas');
 const { logoutUser } = require('~/server/services/AuthService');
 const { getOpenIdConfig } = require('~/strategies');
@@ -38,6 +38,11 @@ const logoutController = async (req, res) => {
   try {
     const logout = await logoutUser(req, refreshToken);
     const { status, message } = logout;
+
+    trackEvent(TelemetryEvents.AUTH_LOGOUT, {
+      userId: req.user?.id ?? req.user?._id?.toString() ?? '',
+      provider: req.user?.provider ?? 'local',
+    });
 
     res.clearCookie('refreshToken');
     res.clearCookie('openid_access_token');

@@ -2,7 +2,7 @@ const cookies = require('cookie');
 const jwt = require('jsonwebtoken');
 const openIdClient = require('openid-client');
 const { logger } = require('@librechat/data-schemas');
-const { isEnabled, findOpenIDUser } = require('@librechat/api');
+const { isEnabled, findOpenIDUser, trackEvent, TelemetryEvents } = require('@librechat/api');
 const {
   requestPasswordReset,
   setOpenIDAuthTokens,
@@ -24,9 +24,15 @@ const registrationController = async (req, res) => {
   try {
     const response = await registerUser(req.body);
     const { status, message } = response;
+    if (status === 200 || status === 201) {
+      trackEvent(TelemetryEvents.AUTH_REGISTER_SUCCESS);
+    } else {
+      trackEvent(TelemetryEvents.AUTH_REGISTER_FAILURE, { status: String(status) });
+    }
     res.status(status).send({ message });
   } catch (err) {
     logger.error('[registrationController]', err);
+    trackEvent(TelemetryEvents.AUTH_REGISTER_FAILURE, { reason: 'exception' });
     return res.status(500).json({ message: err.message });
   }
 };

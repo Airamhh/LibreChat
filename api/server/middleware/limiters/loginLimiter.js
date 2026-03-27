@@ -1,6 +1,6 @@
 const rateLimit = require('express-rate-limit');
 const { ViolationTypes } = require('librechat-data-provider');
-const { limiterCache, removePorts } = require('@librechat/api');
+const { limiterCache, removePorts, trackEvent, TelemetryEvents } = require('@librechat/api');
 const { logViolation } = require('~/cache');
 
 const { LOGIN_WINDOW = 5, LOGIN_MAX = 7, LOGIN_VIOLATION_SCORE: score } = process.env;
@@ -17,6 +17,7 @@ const handler = async (req, res) => {
     windowInMinutes,
   };
 
+  trackEvent(TelemetryEvents.SECURITY_RATE_LIMIT, { limitType: 'login' });
   await logViolation(req, res, type, errorMessage, score);
   return res.status(429).json({ message });
 };

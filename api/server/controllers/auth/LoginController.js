@@ -1,4 +1,5 @@
 const { logger } = require('@librechat/data-schemas');
+const { trackEvent, TelemetryEvents } = require('@librechat/api');
 const { generate2FATempToken } = require('~/server/services/twoFactorService');
 const { setAuthTokens } = require('~/server/services/AuthService');
 
@@ -10,6 +11,9 @@ const loginController = async (req, res) => {
 
     if (req.user.twoFactorEnabled) {
       const tempToken = generate2FATempToken(req.user._id);
+      trackEvent(TelemetryEvents.AUTH_LOGIN_2FA_PENDING, {
+        userId: req.user._id?.toString() ?? '',
+      });
       return res.status(200).json({ twoFAPending: true, tempToken });
     }
 
@@ -17,6 +21,11 @@ const loginController = async (req, res) => {
     user.id = user._id.toString();
 
     const token = await setAuthTokens(req.user._id, res);
+
+    trackEvent(TelemetryEvents.AUTH_LOGIN_SUCCESS, {
+      userId: user.id,
+      provider: user.provider ?? 'local',
+    });
 
     return res.status(200).send({ token, user });
   } catch (err) {

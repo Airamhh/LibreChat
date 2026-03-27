@@ -1,5 +1,7 @@
 import { logger } from '@librechat/data-schemas';
 import { ErrorTypes } from 'librechat-data-provider';
+import { trackEvent, trackException } from '~/telemetry';
+import { TelemetryEvents } from '~/telemetry/events';
 import type { NextFunction, Request, Response } from 'express';
 import type { MongoServerError, ValidationError, CustomError } from '~/types';
 
@@ -7,6 +9,7 @@ const handleDuplicateKeyError = (err: MongoServerError, res: Response) => {
   logger.warn('Duplicate key error: ' + (err.errmsg || err.message));
   const field = err.keyValue ? `${JSON.stringify(Object.keys(err.keyValue))}` : 'unknown';
   const code = 409;
+  trackEvent(TelemetryEvents.ERROR_DUPLICATE_KEY, { field });
   res
     .status(code)
     .send({ messages: `An document with that ${field} already exists.`, fields: field });
@@ -22,6 +25,7 @@ const handleValidationError = (err: ValidationError, res: Response) => {
       ? `${JSON.stringify(errorMessages.join(' '))}`
       : `${JSON.stringify(errorMessages)}`;
 
+  trackEvent(TelemetryEvents.ERROR_VALIDATION, { fields });
   res.status(code).send({ messages, fields });
 };
 
@@ -58,6 +62,7 @@ export const ErrorController = (
       req.originalUrl.includes('/oauth/') &&
       req.originalUrl.includes('/callback')
     ) {
+      trackEvent(TelemetryEvents.ERROR_AUTH_FAILED);
       const domain = process.env.DOMAIN_CLIENT || 'http://localhost:3080';
       return res.redirect(`${domain}/login?redirect=false&error=${ErrorTypes.AUTH_FAILED}`);
     }
@@ -75,6 +80,7 @@ export const ErrorController = (
     }
 
     logger.error('ErrorController => error', err);
+    trackException(err instanceof Error ? err : new Error(String(err)));
     return res.status(500).send('An unknown error occurred.');
   } catch (processingError) {
     logger.error('ErrorController => processing error', processingError);
