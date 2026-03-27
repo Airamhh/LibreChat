@@ -1,11 +1,12 @@
-import { useMemo, memo, type FC, useCallback, useEffect, useRef } from 'react';
+import { useMemo, memo, type FC, useCallback, useEffect, useRef, useState } from 'react';
 import throttle from 'lodash/throttle';
 import { ChevronDown } from 'lucide-react';
 import { useRecoilValue } from 'recoil';
 import { Spinner, useMediaQuery } from '@librechat/client';
 import { List, AutoSizer, CellMeasurer, CellMeasurerCache } from 'react-virtualized';
 import type { TConversation } from 'librechat-data-provider';
-import { useLocalize, TranslationKeys, useFavorites, useShowMarketplace } from '~/hooks';
+import { useLocalize, TranslationKeys, useFavorites, usePinnedConversations, useShowMarketplace } from '~/hooks';
+import PinnedConversationsList from '~/components/Nav/PinnedConversations';
 import FavoritesList from '~/components/Nav/Favorites/FavoritesList';
 import { useActiveJobs } from '~/data-provider';
 import { groupConversationsByDate, cn } from '~/utils';
@@ -32,6 +33,10 @@ interface ConversationsProps {
   isSearchLoading: boolean;
   isChatsExpanded: boolean;
   setIsChatsExpanded: (expanded: boolean) => void;
+  isPinnedAgentsExpanded: boolean;
+  setIsPinnedAgentsExpanded: (expanded: boolean) => void;
+  isPinnedChatsExpanded: boolean;
+  setIsPinnedChatsExpanded: (expanded: boolean) => void;
 }
 
 interface MeasuredRowProps {
@@ -71,6 +76,30 @@ const LoadingSpinner = memo(() => {
 
 LoadingSpinner.displayName = 'LoadingSpinner';
 
+interface SectionHeaderProps {
+  label: string;
+  isExpanded: boolean;
+  onToggle: () => void;
+}
+
+/** Collapsible header for sections (Pinned Agents, Pinned Chats, Chats) */
+const SectionHeader: FC<SectionHeaderProps> = memo(({ label, isExpanded, onToggle }) => {
+  return (
+    <button
+      onClick={onToggle}
+      className="group flex w-full items-center justify-between rounded-lg px-1 py-2 text-xs font-bold text-text-secondary outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black dark:focus-visible:ring-white"
+      type="button"
+    >
+      <span className="select-none">{label}</span>
+      <ChevronDown
+        className={cn('h-3 w-3 transition-transform duration-200', isExpanded ? 'rotate-180' : '')}
+      />
+    </button>
+  );
+});
+
+SectionHeader.displayName = 'SectionHeader';
+
 interface ChatsHeaderProps {
   isExpanded: boolean;
   onToggle: () => void;
@@ -79,18 +108,7 @@ interface ChatsHeaderProps {
 /** Collapsible header for the Chats section */
 const ChatsHeader: FC<ChatsHeaderProps> = memo(({ isExpanded, onToggle }) => {
   const localize = useLocalize();
-  return (
-    <button
-      onClick={onToggle}
-      className="group flex w-full items-center justify-between rounded-lg px-1 py-2 text-xs font-bold text-text-secondary outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black dark:focus-visible:ring-white"
-      type="button"
-    >
-      <span className="select-none">{localize('com_ui_chats')}</span>
-      <ChevronDown
-        className={cn('h-3 w-3 transition-transform duration-200', isExpanded ? 'rotate-180' : '')}
-      />
-    </button>
-  );
+  return <SectionHeader label={localize('com_ui_chats')} isExpanded={isExpanded} onToggle={onToggle} />;
 });
 
 ChatsHeader.displayName = 'ChatsHeader';
@@ -113,7 +131,10 @@ const DateLabel: FC<{ groupName: string; isFirst?: boolean }> = memo(({ groupNam
 DateLabel.displayName = 'DateLabel';
 
 type FlattenedItem =
-  | { type: 'favorites' }
+  | { type: 'pinned-agents-header' }
+  | { type: 'pinned-agents' }
+  | { type: 'pinned-chats-header' }
+  | { type: 'pinned-chats' }
   | { type: 'chats-header' }
   | { type: 'header'; groupName: string }
   | { type: 'convo'; convo: TConversation }
@@ -160,15 +181,21 @@ const Conversations: FC<ConversationsProps> = ({
   isSearchLoading,
   isChatsExpanded,
   setIsChatsExpanded,
+  isPinnedAgentsExpanded,
+  setIsPinnedAgentsExpanded,
+  isPinnedChatsExpanded,
+  setIsPinnedChatsExpanded,
 }) => {
   const localize = useLocalize();
   const search = useRecoilValue(store.search);
   const { favorites, isLoading: isFavoritesLoading } = useFavorites();
+  const { pinnedConversations, isLoading: isPinnedConversationsLoading } = usePinnedConversations();
   const isSmallScreen = useMediaQuery('(max-width: 768px)');
   const convoHeight = isSmallScreen ? 44 : 34;
   const showAgentMarketplace = useShowMarketplace();
 
   const favoritesContentKeyRef = useRef('');
+  const pinnedContentKeyRef = useRef('');
 
   // Fetch active job IDs for showing generation indicators
   const { data: activeJobsData } = useActiveJobs();
@@ -178,10 +205,16 @@ const Conversations: FC<ConversationsProps> = ({
   );
 
   // Determine if FavoritesList will render content
-  const shouldShowFavorites =
+  const shouldShowPinnedAgents =
     !search.query && (isFavoritesLoading || favorites.length > 0 || showAgentMarketplace);
 
   favoritesContentKeyRef.current = `${favorites.length}-${showAgentMarketplace ? 1 : 0}-${isFavoritesLoading ? 1 : 0}`;
+
+  // Determine if PinnedConversationsList will render content
+  const shouldShowPinnedChats =
+    !search.query && (isPinnedConversationsLoading || pinnedConversations.length > 0);
+
+  pinnedContentKeyRef.current = `${pinnedConversations.length}-${isPinnedConversationsLoading ? 1 : 0}`;
 
   const filteredConversations = useMemo(
     () => rawConversations.filter(Boolean) as TConversation[],
@@ -195,10 +228,23 @@ const Conversations: FC<ConversationsProps> = ({
 
   const flattenedItems = useMemo(() => {
     const items: FlattenedItem[] = [];
-    // Only include favorites row if FavoritesList will render content
-    if (shouldShowFavorites) {
-      items.push({ type: 'favorites' });
+
+    // Only include pinned agents section if FavoritesList will render content
+    if (shouldShowPinnedAgents) {
+      items.push({ type: 'pinned-agents-header' });
+      if (isPinnedAgentsExpanded) {
+        items.push({ type: 'pinned-agents' });
+      }
     }
+
+    // Only include pinned chats section if PinnedConversationsList will render content
+    if (shouldShowPinnedChats) {
+      items.push({ type: 'pinned-chats-header' });
+      if (isPinnedChatsExpanded) {
+        items.push({ type: 'pinned-chats' });
+      }
+    }
+
     items.push({ type: 'chats-header' });
 
     if (isChatsExpanded) {
@@ -212,7 +258,15 @@ const Conversations: FC<ConversationsProps> = ({
       }
     }
     return items;
-  }, [groupedConversations, isLoading, isChatsExpanded, shouldShowFavorites]);
+  }, [
+    groupedConversations,
+    isLoading,
+    isChatsExpanded,
+    shouldShowPinnedAgents,
+    isPinnedAgentsExpanded,
+    shouldShowPinnedChats,
+    isPinnedChatsExpanded,
+  ]);
 
   // Store flattenedItems in a ref for keyMapper to access without recreating cache
   const flattenedItemsRef = useRef(flattenedItems);
@@ -229,8 +283,17 @@ const Conversations: FC<ConversationsProps> = ({
           if (!item) {
             return `unknown-${index}`;
           }
-          if (item.type === 'favorites') {
-            return `favorites-${favoritesContentKeyRef.current}`;
+          if (item.type === 'pinned-agents-header') {
+            return 'pinned-agents-header';
+          }
+          if (item.type === 'pinned-agents') {
+            return `pinned-agents-${favoritesContentKeyRef.current}`;
+          }
+          if (item.type === 'pinned-chats-header') {
+            return 'pinned-chats-header';
+          }
+          if (item.type === 'pinned-chats') {
+            return `pinned-chats-${pinnedContentKeyRef.current}`;
           }
           if (item.type === 'chats-header') {
             return 'chats-header';
@@ -250,9 +313,10 @@ const Conversations: FC<ConversationsProps> = ({
     [convoHeight],
   );
 
-  const clearFavoritesCache = useCallback(() => {
+  const clearPinnedSectionsCache = useCallback(() => {
     if (cache) {
       cache.clear(0, 0);
+      cache.clear(1, 0);
       if (containerRef.current && 'recomputeRowHeights' in containerRef.current) {
         containerRef.current.recomputeRowHeights(0);
       }
@@ -261,10 +325,17 @@ const Conversations: FC<ConversationsProps> = ({
 
   useEffect(() => {
     const frameId = requestAnimationFrame(() => {
-      clearFavoritesCache();
+      clearPinnedSectionsCache();
     });
     return () => cancelAnimationFrame(frameId);
-  }, [favorites.length, isFavoritesLoading, showAgentMarketplace, clearFavoritesCache]);
+  }, [
+    favorites.length,
+    isFavoritesLoading,
+    showAgentMarketplace,
+    pinnedConversations.length,
+    isPinnedConversationsLoading,
+    clearPinnedSectionsCache,
+  ]);
 
   const rowRenderer = useCallback(
     ({ index, key, parent, style }) => {
@@ -279,10 +350,42 @@ const Conversations: FC<ConversationsProps> = ({
         );
       }
 
-      if (item.type === 'favorites') {
+      if (item.type === 'pinned-agents-header') {
+        return (
+          <MeasuredRow key={key} {...rowProps}>
+            <SectionHeader
+              label={localize('com_ui_pinned_agents')}
+              isExpanded={isPinnedAgentsExpanded}
+              onToggle={() => setIsPinnedAgentsExpanded(!isPinnedAgentsExpanded)}
+            />
+          </MeasuredRow>
+        );
+      }
+
+      if (item.type === 'pinned-agents') {
         return (
           <MeasuredRow key={key} {...rowProps}>
             <FavoritesList isSmallScreen={isSmallScreen} toggleNav={toggleNav} />
+          </MeasuredRow>
+        );
+      }
+
+      if (item.type === 'pinned-chats-header') {
+        return (
+          <MeasuredRow key={key} {...rowProps}>
+            <SectionHeader
+              label={localize('com_ui_pinned_chats')}
+              isExpanded={isPinnedChatsExpanded}
+              onToggle={() => setIsPinnedChatsExpanded(!isPinnedChatsExpanded)}
+            />
+          </MeasuredRow>
+        );
+      }
+
+      if (item.type === 'pinned-chats') {
+        return (
+          <MeasuredRow key={key} {...rowProps}>
+            <PinnedConversationsList toggleNav={toggleNav} />
           </MeasuredRow>
         );
       }
@@ -299,10 +402,16 @@ const Conversations: FC<ConversationsProps> = ({
       }
 
       if (item.type === 'header') {
-        // First date header index depends on whether favorites row is included
-        // With favorites: [favorites, chats-header, first-header] → index 2
-        // Without favorites: [chats-header, first-header] → index 1
-        const firstHeaderIndex = shouldShowFavorites ? 2 : 1;
+        // Calculate first header index based on visible sections
+        let firstHeaderIndex = 0;
+        if (shouldShowPinnedAgents) {
+          firstHeaderIndex += isPinnedAgentsExpanded ? 2 : 1;
+        }
+        if (shouldShowPinnedChats) {
+          firstHeaderIndex += isPinnedChatsExpanded ? 2 : 1;
+        }
+        firstHeaderIndex += 1; // chats-header
+
         return (
           <MeasuredRow key={key} {...rowProps}>
             <DateLabel groupName={item.groupName} isFirst={index === firstHeaderIndex} />
@@ -332,9 +441,15 @@ const Conversations: FC<ConversationsProps> = ({
       moveToTop,
       toggleNav,
       isSmallScreen,
+      localize,
+      isPinnedAgentsExpanded,
+      setIsPinnedAgentsExpanded,
+      isPinnedChatsExpanded,
+      setIsPinnedChatsExpanded,
       isChatsExpanded,
       setIsChatsExpanded,
-      shouldShowFavorites,
+      shouldShowPinnedAgents,
+      shouldShowPinnedChats,
       activeJobIds,
     ],
   );
