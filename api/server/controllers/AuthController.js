@@ -25,14 +25,20 @@ const registrationController = async (req, res) => {
     const response = await registerUser(req.body);
     const { status, message } = response;
     if (status === 200 || status === 201) {
-      trackEvent(TelemetryEvents.AUTH_REGISTER_SUCCESS);
+      trackEvent(TelemetryEvents.AUTH_REGISTER_SUCCESS, { email: req.body.email ?? '' });
     } else {
-      trackEvent(TelemetryEvents.AUTH_REGISTER_FAILURE, { status: String(status) });
+      trackEvent(TelemetryEvents.AUTH_REGISTER_FAILURE, {
+        email: req.body.email ?? '',
+        status: String(status),
+      });
     }
     res.status(status).send({ message });
   } catch (err) {
     logger.error('[registrationController]', err);
-    trackEvent(TelemetryEvents.AUTH_REGISTER_FAILURE, { reason: 'exception' });
+    trackEvent(TelemetryEvents.AUTH_REGISTER_FAILURE, {
+      email: req.body.email ?? '',
+      reason: 'exception',
+    });
     return res.status(500).json({ message: err.message });
   }
 };

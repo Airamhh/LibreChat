@@ -125,6 +125,8 @@ export const TelemetryEvents = {
   ERROR_SHARE: 'error.share',
 
   /* ── Auth ────────────────────────────────────────────────────────────── */
+  /** A user deleted their own account. */
+  AUTH_DELETE_ACCOUNT: 'auth.delete_account',
   /** A password-reset request or confirmation failed. */
   ERROR_AUTH_RESET: 'error.auth.reset',
   /** A token-refresh operation (JWT or OpenID) failed. */

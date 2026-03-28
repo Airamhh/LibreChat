@@ -7,6 +7,9 @@ const {
   MCPTokenStorage,
   normalizeHttpError,
   extractWebSearchEnvVars,
+  trackEvent,
+  trackException,
+  TelemetryEvents,
 } = require('@librechat/api');
 const {
   Tools,
@@ -292,10 +295,12 @@ const updateUserPluginsController = async (req, res) => {
 
 const deleteUserController = async (req, res) => {
   const { user } = req;
+  const userId = user.id;
+  const userEmail = user.email ?? '';
 
   try {
     const existingUser = await db.getUserById(
-      user.id,
+      userId,
       '+totpSecret +backupCodes _id twoFactorEnabled',
     );
     if (existingUser && existingUser.twoFactorEnabled) {
@@ -310,38 +315,40 @@ const deleteUserController = async (req, res) => {
       }
     }
 
-    await db.deleteMessages({ user: user.id });
-    await db.deleteAllUserSessions({ userId: user.id });
-    await db.deleteTransactions({ user: user.id });
-    await db.deleteUserKey({ userId: user.id, all: true });
+    await db.deleteMessages({ user: userId });
+    await db.deleteAllUserSessions({ userId });
+    await db.deleteTransactions({ user: userId });
+    await db.deleteUserKey({ userId, all: true });
     await db.deleteBalances({ user: user._id });
-    await db.deletePresets(user.id);
+    await db.deletePresets(userId);
     try {
-      await db.deleteConvos(user.id);
+      await db.deleteConvos(userId);
     } catch (error) {
       logger.error('[deleteUserController] Error deleting user convos, likely no convos', error);
     }
-    await deleteUserPluginAuth(user.id, null, true);
-    await db.deleteUserById(user.id);
-    await db.deleteAllSharedLinks(user.id);
+    await deleteUserPluginAuth(userId, null, true);
+    await db.deleteUserById(userId);
+    await db.deleteAllSharedLinks(userId);
     await deleteUserFiles(req);
-    await db.deleteFiles(null, user.id);
-    await db.deleteToolCalls(user.id);
-    await db.deleteUserAgents(user.id);
+    await db.deleteFiles(null, userId);
+    await db.deleteToolCalls(userId);
+    await db.deleteUserAgents(userId);
     await db.deleteAllAgentApiKeys(user._id);
-    await db.deleteAssistants({ user: user.id });
-    await db.deleteConversationTags({ user: user.id });
-    await db.deleteAllUserMemories(user.id);
-    await db.deleteUserPrompts(user.id);
-    await deleteUserMcpServers(user.id);
-    await db.deleteActions({ user: user.id });
-    await db.deleteTokens({ userId: user.id });
-    await db.removeUserFromAllGroups(user.id);
+    await db.deleteAssistants({ user: userId });
+    await db.deleteConversationTags({ user: userId });
+    await db.deleteAllUserMemories(userId);
+    await db.deleteUserPrompts(userId);
+    await deleteUserMcpServers(userId);
+    await db.deleteActions({ user: userId });
+    await db.deleteTokens({ userId });
+    await db.removeUserFromAllGroups(userId);
     await db.deleteAclEntries({ principalId: user._id });
-    logger.info(`User deleted account. Email: ${user.email} ID: ${user.id}`);
+    logger.info(`User deleted account. Email: ${userEmail} ID: ${userId}`);
+    trackEvent(TelemetryEvents.AUTH_DELETE_ACCOUNT, { userId, email: userEmail });
     res.status(200).send({ message: 'User deleted' });
   } catch (err) {
     logger.error('[deleteUserController]', err);
+    trackException(err instanceof Error ? err : new Error(String(err)), { userId, email: userEmail });
     return res.status(500).json({ message: 'Something went wrong.' });
   }
 };

@@ -284,7 +284,11 @@ async function setupSaml() {
             },
           );
 
-          trackEvent(TelemetryEvents.AUTH_LOGIN_SUCCESS, { provider: 'saml' });
+          trackEvent(TelemetryEvents.AUTH_LOGIN_SUCCESS, {
+            provider: 'saml',
+            userId: user._id?.toString() ?? '',
+            email: user.email ?? '',
+          });
           done(null, user);
         } catch (err) {
           logger.error('[samlStrategy] Login failed', err);

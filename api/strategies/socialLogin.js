@@ -44,7 +44,11 @@ const socialLogin =
 
       if (existingUser?.provider === provider) {
         await handleExistingUser(existingUser, avatarUrl, appConfig, email);
-        trackEvent(TelemetryEvents.AUTH_LOGIN_SUCCESS, { provider });
+        trackEvent(TelemetryEvents.AUTH_LOGIN_SUCCESS, {
+          provider,
+          userId: existingUser._id?.toString() ?? '',
+          email: email ?? '',
+        });
         return cb(null, existingUser);
       } else if (existingUser) {
         logger.info(
@@ -80,7 +84,11 @@ const socialLogin =
         emailVerified,
         appConfig,
       });
-      trackEvent(TelemetryEvents.AUTH_LOGIN_SUCCESS, { provider });
+      trackEvent(TelemetryEvents.AUTH_LOGIN_SUCCESS, {
+        provider,
+        userId: newUser._id?.toString() ?? '',
+        email: newUser.email ?? '',
+      });
       return cb(null, newUser);
     } catch (err) {
       logger.error(`[${provider}Login]`, err);

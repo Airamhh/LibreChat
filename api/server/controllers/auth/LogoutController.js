@@ -41,6 +41,7 @@ const logoutController = async (req, res) => {
 
     trackEvent(TelemetryEvents.AUTH_LOGOUT, {
       userId: req.user?.id ?? req.user?._id?.toString() ?? '',
+      email: req.user?.email ?? '',
       provider: req.user?.provider ?? 'local',
     });
 

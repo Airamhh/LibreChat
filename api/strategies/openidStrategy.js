@@ -719,7 +719,11 @@ function createOpenIDCallback(existingUsersOnly) {
   return async (tokenset, done) => {
     try {
       const user = await processOpenIDAuth(tokenset, existingUsersOnly);
-      trackEvent(TelemetryEvents.AUTH_LOGIN_SUCCESS, { provider: 'openid' });
+      trackEvent(TelemetryEvents.AUTH_LOGIN_SUCCESS, {
+        provider: 'openid',
+        userId: user._id?.toString() ?? '',
+        email: user.email ?? '',
+      });
       done(null, user);
     } catch (err) {
       if (err.message === 'Email domain not allowed') {
