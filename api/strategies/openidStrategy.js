@@ -15,6 +15,9 @@ const {
   findOpenIDUser,
   getBalanceConfig,
   isEmailDomainAllowed,
+  trackEvent,
+  trackException,
+  TelemetryEvents,
 } = require('@librechat/api');
 const { getStrategyFunctions } = require('~/server/services/Files/strategies');
 const { findUser, createUser, updateUser } = require('~/models');
@@ -716,18 +719,23 @@ function createOpenIDCallback(existingUsersOnly) {
   return async (tokenset, done) => {
     try {
       const user = await processOpenIDAuth(tokenset, existingUsersOnly);
+      trackEvent(TelemetryEvents.AUTH_LOGIN_SUCCESS, { provider: 'openid' });
       done(null, user);
     } catch (err) {
       if (err.message === 'Email domain not allowed') {
+        trackEvent(TelemetryEvents.ERROR_AUTH_FAILED, { provider: 'openid', reason: err.message });
         return done(null, false, { message: err.message });
       }
       if (err.message === ErrorTypes.AUTH_FAILED) {
+        trackEvent(TelemetryEvents.ERROR_AUTH_FAILED, { provider: 'openid', reason: err.message });
         return done(null, false, { message: err.message });
       }
       if (err.message && err.message.includes('role to log in')) {
+        trackEvent(TelemetryEvents.ERROR_AUTH_FAILED, { provider: 'openid', reason: err.message });
         return done(null, false, { message: err.message });
       }
       logger.error('[openidStrategy] login failed', err);
+      trackException(err, { provider: 'openid' });
       done(err);
     }
   };

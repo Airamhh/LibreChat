@@ -1,6 +1,6 @@
 const { logger } = require('@librechat/data-schemas');
 const { ErrorTypes } = require('librechat-data-provider');
-const { isEnabled, isEmailDomainAllowed } = require('@librechat/api');
+const { isEnabled, isEmailDomainAllowed, trackEvent, trackException, TelemetryEvents } = require('@librechat/api');
 const { createSocialUser, handleExistingUser } = require('./process');
 const { getAppConfig } = require('~/server/services/Config');
 const { findUser } = require('~/models');
@@ -22,6 +22,7 @@ const socialLogin =
         const error = new Error(ErrorTypes.AUTH_FAILED);
         error.code = ErrorTypes.AUTH_FAILED;
         error.message = 'Email domain not allowed';
+        trackEvent(TelemetryEvents.ERROR_AUTH_FAILED, { provider, reason: error.message });
         return cb(error);
       }
 
@@ -43,6 +44,7 @@ const socialLogin =
 
       if (existingUser?.provider === provider) {
         await handleExistingUser(existingUser, avatarUrl, appConfig, email);
+        trackEvent(TelemetryEvents.AUTH_LOGIN_SUCCESS, { provider });
         return cb(null, existingUser);
       } else if (existingUser) {
         logger.info(
@@ -51,6 +53,7 @@ const socialLogin =
         const error = new Error(ErrorTypes.AUTH_FAILED);
         error.code = ErrorTypes.AUTH_FAILED;
         error.provider = existingUser.provider;
+        trackEvent(TelemetryEvents.ERROR_AUTH_FAILED, { provider, reason: 'provider_mismatch' });
         return cb(error);
       }
 
@@ -62,6 +65,7 @@ const socialLogin =
         const error = new Error(ErrorTypes.AUTH_FAILED);
         error.code = ErrorTypes.AUTH_FAILED;
         error.message = 'Social registration is disabled';
+        trackEvent(TelemetryEvents.ERROR_AUTH_FAILED, { provider, reason: error.message });
         return cb(error);
       }
 
@@ -76,9 +80,11 @@ const socialLogin =
         emailVerified,
         appConfig,
       });
+      trackEvent(TelemetryEvents.AUTH_LOGIN_SUCCESS, { provider });
       return cb(null, newUser);
     } catch (err) {
       logger.error(`[${provider}Login]`, err);
+      trackException(err instanceof Error ? err : new Error(String(err)), { provider });
       return cb(err);
     }
   };

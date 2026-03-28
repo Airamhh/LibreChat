@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 const { logger } = require('@librechat/data-schemas');
 const { errorsToString } = require('librechat-data-provider');
 const { Strategy: PassportLocalStrategy } = require('passport-local');
-const { isEnabled, checkEmailConfig, comparePassword } = require('@librechat/api');
+const { isEnabled, checkEmailConfig, comparePassword, trackException } = require('@librechat/api');
 const { findUser, updateUser } = require('~/models');
 const { loginSchema } = require('./validators');
 
@@ -69,6 +69,7 @@ async function passportLogin(req, email, password, done) {
     logger.info(`[Login] [Login successful] [Username: ${email}] [Request-IP: ${req.ip}]`);
     return done(null, user);
   } catch (err) {
+    trackException(err, { provider: 'local' });
     return done(err);
   }
 }

@@ -5,7 +5,7 @@ const passport = require('passport');
 const { ErrorTypes } = require('librechat-data-provider');
 const { hashToken, logger } = require('@librechat/data-schemas');
 const { Strategy: SamlStrategy } = require('@node-saml/passport-saml');
-const { getBalanceConfig, isEmailDomainAllowed } = require('@librechat/api');
+const { getBalanceConfig, isEmailDomainAllowed, trackEvent, trackException, TelemetryEvents } = require('@librechat/api');
 const { getStrategyFunctions } = require('~/server/services/Files/strategies');
 const { findUser, createUser, updateUser } = require('~/models');
 const { getAppConfig } = require('~/server/services/Config');
@@ -284,9 +284,11 @@ async function setupSaml() {
             },
           );
 
+          trackEvent(TelemetryEvents.AUTH_LOGIN_SUCCESS, { provider: 'saml' });
           done(null, user);
         } catch (err) {
           logger.error('[samlStrategy] Login failed', err);
+          trackException(err, { provider: 'saml' });
           done(err);
         }
       }),
