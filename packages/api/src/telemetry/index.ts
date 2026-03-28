@@ -1,6 +1,8 @@
 import { logger } from '@librechat/data-schemas';
 import type { TelemetryClient } from 'applicationinsights';
 
+export * from './events';
+
 let client: TelemetryClient | null = null;
 
 /**
