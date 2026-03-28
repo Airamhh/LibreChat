@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import * as Menu from '@ariakit/react/menu';
 import { PinOff, Ellipsis } from 'lucide-react';
 import { DropdownPopup } from '@librechat/client';
+import { useParams } from 'react-router-dom';
+import { Constants } from 'librechat-data-provider';
 import type { TConversation } from 'librechat-data-provider';
 import EndpointIcon from '~/components/Endpoints/EndpointIcon';
-import { usePinnedConversations, useLocalize } from '~/hooks';
+import { usePinnedConversations, useLocalize, useNavigateToConvo } from '~/hooks';
 import { useGetEndpointsQuery } from '~/data-provider';
-import { useNavigateToConvo } from '~/hooks';
 import { cn } from '~/utils';
 
 type PinnedChatItemProps = {
@@ -16,6 +17,7 @@ type PinnedChatItemProps = {
 };
 
 export default function PinnedChatItem({ conversation, onRemoveFocus, onNavigated }: PinnedChatItemProps) {
+  const params = useParams();
   const localize = useLocalize();
   const { navigateToConvo } = useNavigateToConvo();
   const { removePinnedConversation } = usePinnedConversations();
@@ -23,10 +25,22 @@ export default function PinnedChatItem({ conversation, onRemoveFocus, onNavigate
   const [isPopoverActive, setIsPopoverActive] = useState(false);
 
   const { conversationId, title } = conversation;
+  const currentConvoId = params.conversationId;
   const displayTitle = title || localize('com_ui_new_chat');
 
   const handleSelect = () => {
-    navigateToConvo(conversation);
+    if (currentConvoId === conversationId || isPopoverActive) {
+      return;
+    }
+
+    if (typeof title === 'string' && title.length > 0) {
+      document.title = title;
+    }
+
+    navigateToConvo(conversation, {
+      currentConvoId,
+      resetLatestMessage: !(conversationId ?? '') || conversationId === Constants.NEW_CONVO,
+    });
     onNavigated?.();
   };
 

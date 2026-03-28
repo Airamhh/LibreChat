@@ -3,7 +3,7 @@ import { useDrag, useDrop } from 'react-dnd';
 import { Skeleton } from '@librechat/client';
 import { useQueries } from '@tanstack/react-query';
 import { useRecoilValue } from 'recoil';
-import { QueryKeys, dataService } from 'librechat-data-provider';
+import { dataService } from 'librechat-data-provider';
 import type t from 'librechat-data-provider';
 import { usePinnedConversations } from '~/hooks';
 import PinnedChatItem from './PinnedChatItem';
@@ -142,7 +142,7 @@ export default function PinnedChatsList({
 
   const conversationQueries = useQueries({
     queries: safePinned.map(({ conversationId }) => ({
-      queryKey: [QueryKeys.conversation, conversationId],
+      queryKey: ['pinnedChatLookup', conversationId],
       queryFn: async (): Promise<ConvoQueryResult> => {
         try {
           const conversation = await dataService.getConversationById(conversationId);
