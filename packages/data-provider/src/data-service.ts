@@ -1093,3 +1093,20 @@ export interface ActiveJobsResponse {
 export const getActiveJobs = (): Promise<ActiveJobsResponse> => {
   return request.get(endpoints.activeJobs());
 };
+
+/* User Settings */
+export function getUserSettings(): Promise<q.UserSettingsResponse> {
+  return request.get(endpoints.userSettings());
+}
+
+export function updateUserSettings(
+  data: q.UpdateUserSettingsRequest,
+): Promise<q.UserSettingsResponse> {
+  return request.put(endpoints.userSettings(), data);
+}
+
+export function patchUserSettings(
+  data: q.PatchUserSettingsRequest,
+): Promise<q.UserSettingsResponse> {
+  return request.patch(endpoints.userSettings(), data);
+}

@@ -213,3 +213,20 @@ export type GraphTokenResponse = {
   expires_in: number;
   scope: string;
 };
+
+/* User Settings */
+export type UserSettingsResponse = {
+  userId: string;
+  version: number;
+  preferences: t.UserPreferences;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type UpdateUserSettingsRequest = {
+  preferences: t.UserPreferences;
+};
+
+export type PatchUserSettingsRequest = {
+  preferences: Partial<t.UserPreferences>;
+};
