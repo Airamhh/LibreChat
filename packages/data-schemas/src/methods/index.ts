@@ -3,6 +3,7 @@ import { createTokenMethods, type TokenMethods } from './token';
 import { createRoleMethods, RoleConflictError } from './role';
 import type { RoleMethods, RoleDeps } from './role';
 import { createUserMethods, DEFAULT_SESSION_EXPIRY, type UserMethods } from './user';
+import { createUserSettingsMethods, type UserSettingsMethods } from './usersettings';
 import { createKeyMethods, type KeyMethods } from './key';
 import { createFileMethods, type FileMethods } from './file';
 /* Memories */
@@ -54,6 +55,7 @@ export { RoleConflictError, DEFAULT_REFRESH_TOKEN_EXPIRY, DEFAULT_SESSION_EXPIRY
 export { tokenValues, cacheTokenValues, premiumTokenValues, defaultRate };
 
 export type AllMethods = UserMethods &
+  UserSettingsMethods &
   SessionMethods &
   TokenMethods &
   RoleMethods &
@@ -171,6 +173,7 @@ export function createMethods(
 
   return {
     ...createUserMethods(mongoose),
+    ...createUserSettingsMethods(mongoose),
     ...createSessionMethods(mongoose),
     ...createTokenMethods(mongoose),
     ...roleMethods,
@@ -211,6 +214,7 @@ export function createMethods(
 
 export type {
   UserMethods,
+  UserSettingsMethods,
   SessionMethods,
   TokenMethods,
   RoleMethods,

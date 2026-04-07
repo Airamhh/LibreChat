@@ -3,6 +3,7 @@ import type { Types } from 'mongoose';
 export type ObjectId = Types.ObjectId;
 export * from './app';
 export * from './user';
+export * from './usersettings';
 export * from './token';
 export * from './convo';
 export * from './session';
