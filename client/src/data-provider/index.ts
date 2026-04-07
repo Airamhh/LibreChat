@@ -16,3 +16,5 @@ export * from './roles';
 export * from './tags';
 export * from './MCP';
 export * from './SSE';
+/* User Settings */
+export * from './UserSettings';
