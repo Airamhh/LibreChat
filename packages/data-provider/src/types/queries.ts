@@ -3,6 +3,7 @@ import type * as p from '../accessPermissions';
 import type * as a from '../types/agents';
 import type * as s from '../schemas';
 import type * as t from '../types';
+import type { UserPreferences } from './usersettings';
 
 export type Conversation = {
   id: string;
@@ -218,15 +219,15 @@ export type GraphTokenResponse = {
 export type UserSettingsResponse = {
   userId: string;
   version: number;
-  preferences: t.UserPreferences;
+  preferences: UserPreferences;
   createdAt: string;
   updatedAt: string;
 };
 
 export type UpdateUserSettingsRequest = {
-  preferences: t.UserPreferences;
+  preferences: UserPreferences;
 };
 
 export type PatchUserSettingsRequest = {
-  preferences: Partial<t.UserPreferences>;
+  preferences: Partial<UserPreferences>;
 };
