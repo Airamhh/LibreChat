@@ -5,6 +5,8 @@ import { LocalStorageKeys, PermissionTypes, Permissions } from 'librechat-data-p
 import type { TStartupConfig, TUser } from 'librechat-data-provider';
 import { useMCPToolsQuery, useMCPServersQuery } from '~/data-provider';
 import { cleanupTimestampedStorage } from '~/utils/timestamps';
+import useUserSettingsSync from '../useUserSettingsSync';
+import useSettingsMigration from '../useSettingsMigration';
 import useSpeechSettingsInit from './useSpeechSettingsInit';
 import { useHasAccess } from '~/hooks';
 import store from '~/store';
@@ -23,6 +25,9 @@ export default function useAppStartup({
   });
 
   useSpeechSettingsInit(!!user);
+  useUserSettingsSync(!!user);
+  useSettingsMigration(!!user);
+
   const { data: loadedServers, isLoading: serversLoading } = useMCPServersQuery({
     enabled: canUseMcp,
   });

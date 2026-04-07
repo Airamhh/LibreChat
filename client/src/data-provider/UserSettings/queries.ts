@@ -48,8 +48,31 @@ export const useUpdateUserSettingsMutation = (): UseMutationResult<
     [MutationKeys.updateUserSettings],
     (data: UpdateUserSettingsRequest) => dataService.updateUserSettings(data),
     {
+      onMutate: async (variables) => {
+        await queryClient.cancelQueries([QueryKeys.userSettings]);
+        const previousSettings = queryClient.getQueryData<UserSettingsResponse>([
+          QueryKeys.userSettings,
+        ]);
+
+        if (previousSettings) {
+          queryClient.setQueryData<UserSettingsResponse>([QueryKeys.userSettings], {
+            ...previousSettings,
+            preferences: variables.preferences,
+          });
+        }
+
+        return { previousSettings };
+      },
+      onError: (_error, _variables, context) => {
+        if (context?.previousSettings) {
+          queryClient.setQueryData([QueryKeys.userSettings], context.previousSettings);
+        }
+      },
       onSuccess: (data) => {
         queryClient.setQueryData([QueryKeys.userSettings], data);
+      },
+      onSettled: () => {
+        void queryClient.invalidateQueries([QueryKeys.userSettings]);
       },
     },
   );
@@ -69,8 +92,44 @@ export const usePatchUserSettingsMutation = (): UseMutationResult<
     [MutationKeys.patchUserSettings],
     (data: PatchUserSettingsRequest) => dataService.patchUserSettings(data),
     {
+      onMutate: async (variables) => {
+        await queryClient.cancelQueries([QueryKeys.userSettings]);
+        const previousSettings = queryClient.getQueryData<UserSettingsResponse>([
+          QueryKeys.userSettings,
+        ]);
+
+        if (previousSettings) {
+          const mergedPreferences = { ...previousSettings.preferences };
+
+          for (const [key, value] of Object.entries(variables.preferences)) {
+            if (key === 'speech' && value && typeof value === 'object') {
+              mergedPreferences.speech = {
+                ...mergedPreferences.speech,
+                ...value,
+              } as typeof mergedPreferences.speech;
+            } else {
+              (mergedPreferences as Record<string, unknown>)[key] = value;
+            }
+          }
+
+          queryClient.setQueryData<UserSettingsResponse>([QueryKeys.userSettings], {
+            ...previousSettings,
+            preferences: mergedPreferences,
+          });
+        }
+
+        return { previousSettings };
+      },
+      onError: (_error, _variables, context) => {
+        if (context?.previousSettings) {
+          queryClient.setQueryData([QueryKeys.userSettings], context.previousSettings);
+        }
+      },
       onSuccess: (data) => {
         queryClient.setQueryData([QueryKeys.userSettings], data);
+      },
+      onSettled: () => {
+        void queryClient.invalidateQueries([QueryKeys.userSettings]);
       },
     },
   );
