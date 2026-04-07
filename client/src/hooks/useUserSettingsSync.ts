@@ -1,11 +1,11 @@
 import { useEffect, useContext } from 'react';
-import { useSetRecoilState, useSetRecoilState as useJotaiSetAtom } from 'recoil';
+import { useSetRecoilState } from 'recoil';
 import { useSetAtom } from 'jotai';
 import type { UserPreferences } from 'librechat-data-provider';
 import { applyFontSize, ThemeContext } from '@librechat/client';
 import { useUserSettingsQuery } from '~/data-provider';
 import { fontSizeAtom } from '~/store/fontSize';
-import { lang } from '~/store/language';
+import language from '~/store/language';
 import store from '~/store';
 
 /**
@@ -18,7 +18,7 @@ export default function useUserSettingsSync(enabled: boolean) {
 
   const { setTheme } = useContext(ThemeContext);
   const setFontSize = useSetAtom(fontSizeAtom);
-  const setLanguage = useSetAtom(lang);
+  const setLanguage = useSetAtom(language.lang);
 
   const setEnterToSend = useSetRecoilState(store.enterToSend);
   const setMaximizeChatSpace = useSetRecoilState(store.maximizeChatSpace);
