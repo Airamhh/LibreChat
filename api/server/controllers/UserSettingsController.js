@@ -19,7 +19,11 @@ const getUserSettingsController = async (req, res) => {
     const settings = await getUserSettingsService({ getUserSettings }, userId);
 
     if (!settings) {
-      return res.status(404).json({ message: 'User settings not found' });
+      return res.status(200).json({
+        userId,
+        version: 1,
+        preferences: {},
+      });
     }
 
     res.status(200).json(settings);
