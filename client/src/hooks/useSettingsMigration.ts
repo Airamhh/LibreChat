@@ -25,6 +25,19 @@ const settingsMapping: Record<string, keyof UserPreferences> = {
   plusCommand: 'plusCommand',
   slashCommand: 'slashCommand',
   UsernameDisplay: 'usernameDisplay',
+  'color-theme': 'colorTheme',
+  'theme-name': 'themeName',
+  fontSize: 'fontSize',
+  lang: 'language',
+  autoScroll: 'autoScroll',
+  unifiedSidebarExpanded: 'sidebarExpanded',
+  keepScreenAwake: 'keepScreenAwake',
+  showScrollButton: 'showScrollButton',
+  forkSetting: 'forkSetting',
+  splitAtTarget: 'splitAtTarget',
+  saveBadgesState: 'saveBadgesState',
+  centerFormOnLanding: 'centerFormOnLanding',
+  showFooter: 'showFooter',
 };
 
 /**

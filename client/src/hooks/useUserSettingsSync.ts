@@ -1,7 +1,11 @@
-import { useEffect } from 'react';
-import { useSetRecoilState } from 'recoil';
+import { useEffect, useContext } from 'react';
+import { useSetRecoilState, useSetRecoilState as useJotaiSetAtom } from 'recoil';
+import { useSetAtom } from 'jotai';
 import type { UserPreferences } from 'librechat-data-provider';
+import { applyFontSize, ThemeContext } from '@librechat/client';
 import { useUserSettingsQuery } from '~/data-provider';
+import { fontSizeAtom } from '~/store/fontSize';
+import { lang } from '~/store/language';
 import store from '~/store';
 
 /**
@@ -11,6 +15,10 @@ export default function useUserSettingsSync(enabled: boolean) {
   const { data: userSettings, isSuccess } = useUserSettingsQuery({
     enabled,
   });
+
+  const { setTheme } = useContext(ThemeContext);
+  const setFontSize = useSetAtom(fontSizeAtom);
+  const setLanguage = useSetAtom(lang);
 
   const setEnterToSend = useSetRecoilState(store.enterToSend);
   const setMaximizeChatSpace = useSetRecoilState(store.maximizeChatSpace);
@@ -26,6 +34,16 @@ export default function useUserSettingsSync(enabled: boolean) {
   const setPlusCommand = useSetRecoilState(store.plusCommand);
   const setSlashCommand = useSetRecoilState(store.slashCommand);
   const setUsernameDisplay = useSetRecoilState(store.UsernameDisplay);
+
+  const setAutoScroll = useSetRecoilState(store.autoScroll);
+  const setSidebarExpanded = useSetRecoilState(store.sidebarExpanded);
+  const setKeepScreenAwake = useSetRecoilState(store.keepScreenAwake);
+  const setShowScrollButton = useSetRecoilState(store.showScrollButton);
+  const setForkSetting = useSetRecoilState(store.forkSetting);
+  const setSplitAtTarget = useSetRecoilState(store.splitAtTarget);
+  const setSaveBadgesState = useSetRecoilState(store.saveBadgesState);
+  const setCenterFormOnLanding = useSetRecoilState(store.centerFormOnLanding);
+  const setShowFooter = useSetRecoilState(store.showFooter);
 
   const setConversationMode = useSetRecoilState(store.conversationMode);
   const setAdvancedMode = useSetRecoilState(store.advancedMode);
@@ -50,6 +68,17 @@ export default function useUserSettingsSync(enabled: boolean) {
     }
 
     const prefs = userSettings.preferences as UserPreferences;
+
+    if (prefs.colorTheme !== undefined && setTheme) {
+      setTheme(prefs.colorTheme);
+    }
+    if (prefs.fontSize !== undefined) {
+      setFontSize(prefs.fontSize);
+      applyFontSize(prefs.fontSize);
+    }
+    if (prefs.language !== undefined) {
+      setLanguage(prefs.language);
+    }
 
     if (prefs.enterToSend !== undefined) {
       setEnterToSend(prefs.enterToSend);
@@ -92,6 +121,34 @@ export default function useUserSettingsSync(enabled: boolean) {
     }
     if (prefs.usernameDisplay !== undefined) {
       setUsernameDisplay(prefs.usernameDisplay);
+    }
+
+    if (prefs.autoScroll !== undefined) {
+      setAutoScroll(prefs.autoScroll);
+    }
+    if (prefs.sidebarExpanded !== undefined) {
+      setSidebarExpanded(prefs.sidebarExpanded);
+    }
+    if (prefs.keepScreenAwake !== undefined) {
+      setKeepScreenAwake(prefs.keepScreenAwake);
+    }
+    if (prefs.showScrollButton !== undefined) {
+      setShowScrollButton(prefs.showScrollButton);
+    }
+    if (prefs.forkSetting !== undefined) {
+      setForkSetting(prefs.forkSetting);
+    }
+    if (prefs.splitAtTarget !== undefined) {
+      setSplitAtTarget(prefs.splitAtTarget);
+    }
+    if (prefs.saveBadgesState !== undefined) {
+      setSaveBadgesState(prefs.saveBadgesState);
+    }
+    if (prefs.centerFormOnLanding !== undefined) {
+      setCenterFormOnLanding(prefs.centerFormOnLanding);
+    }
+    if (prefs.showFooter !== undefined) {
+      setShowFooter(prefs.showFooter);
     }
 
     if (prefs.speech?.conversationMode !== undefined) {

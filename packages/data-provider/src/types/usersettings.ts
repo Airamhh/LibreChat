@@ -51,4 +51,15 @@ export interface UserPreferences {
   usernameDisplay?: boolean;
   prompts?: PromptsSettings;
   defaultTemporaryChat?: boolean;
+  colorTheme?: string;
+  themeName?: string;
+  autoScroll?: boolean;
+  sidebarExpanded?: boolean;
+  keepScreenAwake?: boolean;
+  showScrollButton?: boolean;
+  forkSetting?: string;
+  splitAtTarget?: boolean;
+  saveBadgesState?: boolean;
+  centerFormOnLanding?: boolean;
+  showFooter?: boolean;
 }
