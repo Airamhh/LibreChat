@@ -6,6 +6,8 @@ export * from './cdn';
 export * from './auth';
 /* API Keys */
 export * from './apiKeys';
+/* User Settings */
+export * from './usersettings';
 /* MCP */
 export * from './mcp/registry/MCPServersRegistry';
 export * from './mcp/MCPManager';

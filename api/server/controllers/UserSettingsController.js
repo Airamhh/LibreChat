@@ -2,7 +2,7 @@ const {
   getUserSettingsService,
   updateUserSettingsService,
   patchUserSettingsService,
-} = require('@librechat/api/usersettings/service');
+} = require('@librechat/api');
 
 /**
  * GET /api/settings/user
