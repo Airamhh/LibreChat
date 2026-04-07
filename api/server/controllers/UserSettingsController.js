@@ -3,6 +3,11 @@ const {
   updateUserSettingsService,
   patchUserSettingsService,
 } = require('@librechat/api');
+const {
+  getUserSettings,
+  updateUserSettings,
+  patchUserSettings,
+} = require('~/models');
 
 /**
  * GET /api/settings/user
@@ -11,7 +16,7 @@ const {
 const getUserSettingsController = async (req, res) => {
   try {
     const userId = req.user.id;
-    const settings = await getUserSettingsService(req.app.locals, userId);
+    const settings = await getUserSettingsService({ getUserSettings }, userId);
 
     if (!settings) {
       return res.status(404).json({ message: 'User settings not found' });
@@ -41,7 +46,7 @@ const updateUserSettingsController = async (req, res) => {
       return res.status(400).json({ message: 'Preferences must be an object' });
     }
 
-    const settings = await updateUserSettingsService(req.app.locals, userId, preferences);
+    const settings = await updateUserSettingsService({ updateUserSettings }, userId, preferences);
 
     res.status(200).json(settings);
   } catch (error) {
@@ -72,7 +77,7 @@ const patchUserSettingsController = async (req, res) => {
       return res.status(400).json({ message: 'Preferences must be an object' });
     }
 
-    const settings = await patchUserSettingsService(req.app.locals, userId, preferences);
+    const settings = await patchUserSettingsService({ patchUserSettings }, userId, preferences);
 
     res.status(200).json(settings);
   } catch (error) {
