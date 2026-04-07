@@ -142,38 +142,6 @@ export default function useUserSettingsSync(enabled: boolean) {
     if (prefs.speech?.tts?.cacheTTS !== undefined) {
       setCacheTTS(prefs.speech.tts.cacheTTS);
     }
-  }, [
-    isSuccess,
-    userSettings,
-    setEnterToSend,
-    setMaximizeChatSpace,
-    setChatDirection,
-    setAutoExpandTools,
-    setSaveDrafts,
-    setRememberDefaultFork,
-    setShowThinking,
-    setEnableUserMsgMarkdown,
-    setModularChat,
-    setLaTeXParsing,
-    setAtCommand,
-    setPlusCommand,
-    setSlashCommand,
-    setUsernameDisplay,
-    setConversationMode,
-    setAdvancedMode,
-    setSpeechToText,
-    setEngineSTT,
-    setLanguageSTT,
-    setAutoTranscribeAudio,
-    setDecibelValue,
-    setAutoSendText,
-    setTextToSpeech,
-    setEngineTTS,
-    setVoice,
-    setCloudBrowserVoices,
-    setLanguageTTS,
-    setAutomaticPlayback,
-    setPlaybackRate,
-    setCacheTTS,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSuccess, userSettings]);
 }

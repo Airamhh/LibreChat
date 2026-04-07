@@ -136,9 +136,12 @@ export default function useSettingsMigration(enabled: boolean) {
         setTimeout(() => setAutoScroll(true), 100);
       } catch (error) {
         console.error('Failed to migrate settings to database:', error);
+        localStorage.setItem(MIGRATION_KEY, 'true');
+        migrationAttempted.current = true;
       }
     };
 
     void migrateSettings();
-  }, [enabled, updateUserSettings, setAutoScroll]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled]);
 }
