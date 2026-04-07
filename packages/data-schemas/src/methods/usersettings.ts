@@ -1,3 +1,4 @@
+import type { Model } from 'mongoose';
 import type { IUserSettings, IUserSettingsDocument, UserPreferences } from '~/types';
 
 export interface UserSettingsMethods {
@@ -18,17 +19,15 @@ export interface UserSettingsMethods {
 export function createUserSettingsMethods(
   mongoose: typeof import('mongoose'),
 ): UserSettingsMethods {
-  const { UserSettings } = require('~/models').createModels(mongoose);
-
   return {
-    getUserSettings: (userId: string) => getUserSettings(UserSettings, userId),
-    createUserSettings: (data: Partial<IUserSettings>) => createUserSettings(UserSettings, data),
+    getUserSettings: (userId: string) => getUserSettings(mongoose, userId),
+    createUserSettings: (data: Partial<IUserSettings>) => createUserSettings(mongoose, data),
     updateUserSettings: (userId: string, preferences: UserPreferences) =>
-      updateUserSettings(UserSettings, userId, preferences),
+      updateUserSettings(mongoose, userId, preferences),
     patchUserSettings: (userId: string, partialPreferences: Partial<UserPreferences>) =>
-      patchUserSettings(UserSettings, userId, partialPreferences),
-    deleteUserSettings: (userId: string) => deleteUserSettings(UserSettings, userId),
-    userSettingsExist: (userId: string) => userSettingsExist(UserSettings, userId),
+      patchUserSettings(mongoose, userId, partialPreferences),
+    deleteUserSettings: (userId: string) => deleteUserSettings(mongoose, userId),
+    userSettingsExist: (userId: string) => userSettingsExist(mongoose, userId),
   };
 }
 
@@ -36,9 +35,10 @@ export function createUserSettingsMethods(
  * Get user settings by user ID
  */
 async function getUserSettings(
-  UserSettings: ReturnType<typeof import('~/models/usersettings').createUserSettingsModel>,
+  mongoose: typeof import('mongoose'),
   userId: string,
 ): Promise<IUserSettingsDocument | null> {
+  const UserSettings = mongoose.models.UserSettings as Model<IUserSettingsDocument>;
   return await UserSettings.findOne({ userId }).lean();
 }
 
@@ -46,9 +46,10 @@ async function getUserSettings(
  * Create new user settings
  */
 async function createUserSettings(
-  UserSettings: ReturnType<typeof import('~/models/usersettings').createUserSettingsModel>,
+  mongoose: typeof import('mongoose'),
   data: Partial<IUserSettings>,
 ): Promise<IUserSettingsDocument> {
+  const UserSettings = mongoose.models.UserSettings as Model<IUserSettingsDocument>;
   const settings = new UserSettings({
     ...data,
     version: data.version ?? 1,
@@ -60,10 +61,11 @@ async function createUserSettings(
  * Update user settings (full replace)
  */
 async function updateUserSettings(
-  UserSettings: ReturnType<typeof import('~/models/usersettings').createUserSettingsModel>,
+  mongoose: typeof import('mongoose'),
   userId: string,
   preferences: UserPreferences,
 ): Promise<IUserSettingsDocument | null> {
+  const UserSettings = mongoose.models.UserSettings as Model<IUserSettingsDocument>;
   return await UserSettings.findOneAndUpdate(
     { userId },
     {
@@ -80,10 +82,11 @@ async function updateUserSettings(
  * Update user settings (partial update)
  */
 async function patchUserSettings(
-  UserSettings: ReturnType<typeof import('~/models/usersettings').createUserSettingsModel>,
+  mongoose: typeof import('mongoose'),
   userId: string,
   partialPreferences: Partial<UserPreferences>,
 ): Promise<IUserSettingsDocument | null> {
+  const UserSettings = mongoose.models.UserSettings as Model<IUserSettingsDocument>;
   const updates: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(partialPreferences)) {
@@ -101,9 +104,10 @@ async function patchUserSettings(
  * Delete user settings
  */
 async function deleteUserSettings(
-  UserSettings: ReturnType<typeof import('~/models/usersettings').createUserSettingsModel>,
+  mongoose: typeof import('mongoose'),
   userId: string,
 ): Promise<boolean> {
+  const UserSettings = mongoose.models.UserSettings as Model<IUserSettingsDocument>;
   const result = await UserSettings.deleteOne({ userId });
   return result.deletedCount > 0;
 }
@@ -112,9 +116,10 @@ async function deleteUserSettings(
  * Check if user settings exist
  */
 async function userSettingsExist(
-  UserSettings: ReturnType<typeof import('~/models/usersettings').createUserSettingsModel>,
+  mongoose: typeof import('mongoose'),
   userId: string,
 ): Promise<boolean> {
+  const UserSettings = mongoose.models.UserSettings as Model<IUserSettingsDocument>;
   const count = await UserSettings.countDocuments({ userId }).limit(1);
   return count > 0;
 }
