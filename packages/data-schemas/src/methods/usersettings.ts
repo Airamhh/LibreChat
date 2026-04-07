@@ -73,6 +73,9 @@ async function updateUserSettings(
         preferences,
         version: 1,
       },
+      $setOnInsert: {
+        userId,
+      },
     },
     { new: true, upsert: true },
   ).lean();
@@ -95,7 +98,12 @@ async function patchUserSettings(
 
   return await UserSettings.findOneAndUpdate(
     { userId },
-    { $set: updates },
+    {
+      $set: updates,
+      $setOnInsert: {
+        userId,
+      },
+    },
     { new: true, upsert: true },
   ).lean();
 }
