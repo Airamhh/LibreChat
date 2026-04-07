@@ -1,4 +1,4 @@
-import type { UserPreferences, IUserSettingsDocument } from 'librechat-data-provider';
+import type { UserPreferences, IUserSettingsDocument } from '@librechat/data-schemas';
 
 const MAX_SETTINGS_STRING_LENGTH = 512;
 
