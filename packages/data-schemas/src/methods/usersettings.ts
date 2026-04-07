@@ -38,8 +38,11 @@ async function getUserSettings(
   mongoose: typeof import('mongoose'),
   userId: string,
 ): Promise<IUserSettingsDocument | null> {
+  console.log('[getUserSettings] DB method called for userId:', userId);
   const UserSettings = mongoose.models.UserSettings as Model<IUserSettingsDocument>;
-  return await UserSettings.findOne({ userId }).lean();
+  const result = await UserSettings.findOne({ userId }).lean();
+  console.log('[getUserSettings] DB result:', result ? 'found' : 'not found');
+  return result;
 }
 
 /**
@@ -65,8 +68,10 @@ async function updateUserSettings(
   userId: string,
   preferences: UserPreferences,
 ): Promise<IUserSettingsDocument | null> {
+  console.log('[updateUserSettings] DB method called for userId:', userId);
+  console.log('[updateUserSettings] Preferences keys:', Object.keys(preferences));
   const UserSettings = mongoose.models.UserSettings as Model<IUserSettingsDocument>;
-  return await UserSettings.findOneAndUpdate(
+  const result = await UserSettings.findOneAndUpdate(
     { userId },
     {
       $set: {
@@ -79,6 +84,8 @@ async function updateUserSettings(
     },
     { new: true, upsert: true },
   ).lean();
+  console.log('[updateUserSettings] DB upsert result:', result ? 'success' : 'failed', result?._id);
+  return result;
 }
 
 /**
@@ -89,6 +96,8 @@ async function patchUserSettings(
   userId: string,
   partialPreferences: Partial<UserPreferences>,
 ): Promise<IUserSettingsDocument | null> {
+  console.log('[patchUserSettings] DB method called for userId:', userId);
+  console.log('[patchUserSettings] Partial preferences keys:', Object.keys(partialPreferences));
   const UserSettings = mongoose.models.UserSettings as Model<IUserSettingsDocument>;
   const updates: Record<string, unknown> = {};
 
@@ -96,7 +105,8 @@ async function patchUserSettings(
     updates[`preferences.${key}`] = value;
   }
 
-  return await UserSettings.findOneAndUpdate(
+  console.log('[patchUserSettings] DB updates:', Object.keys(updates));
+  const result = await UserSettings.findOneAndUpdate(
     { userId },
     {
       $set: updates,
@@ -106,6 +116,8 @@ async function patchUserSettings(
     },
     { new: true, upsert: true },
   ).lean();
+  console.log('[patchUserSettings] DB upsert result:', result ? 'success' : 'failed', result?._id);
+  return result;
 }
 
 /**

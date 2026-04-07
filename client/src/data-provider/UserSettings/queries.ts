@@ -22,7 +22,10 @@ export const useUserSettingsQuery = (
   const queriesEnabled = useRecoilValue<boolean>(store.queriesEnabled);
   return useQuery<UserSettingsResponse>(
     [QueryKeys.userSettings],
-    () => dataService.getUserSettings(),
+    () => {
+      console.log('[useUserSettingsQuery] Fetching user settings...');
+      return dataService.getUserSettings();
+    },
     {
       retry: 1,
       refetchOnWindowFocus: false,
@@ -30,6 +33,14 @@ export const useUserSettingsQuery = (
       refetchOnMount: false,
       ...config,
       enabled: (config?.enabled ?? true) === true && queriesEnabled,
+      onSuccess: (data) => {
+        console.log('[useUserSettingsQuery] Success:', data);
+        config?.onSuccess?.(data);
+      },
+      onError: (error) => {
+        console.error('[useUserSettingsQuery] Error:', error);
+        config?.onError?.(error);
+      },
     },
   );
 };
@@ -46,9 +57,13 @@ export const useUpdateUserSettingsMutation = (): UseMutationResult<
 
   return useMutation<UserSettingsResponse, Error, UpdateUserSettingsRequest>(
     [MutationKeys.updateUserSettings],
-    (data: UpdateUserSettingsRequest) => dataService.updateUserSettings(data),
+    (data: UpdateUserSettingsRequest) => {
+      console.log('[updateUserSettings] Mutation called with data:', data);
+      return dataService.updateUserSettings(data);
+    },
     {
       onMutate: async (variables) => {
+        console.log('[updateUserSettings] onMutate', variables);
         await queryClient.cancelQueries([QueryKeys.userSettings]);
         const previousSettings = queryClient.getQueryData<UserSettingsResponse>([
           QueryKeys.userSettings,
@@ -63,15 +78,18 @@ export const useUpdateUserSettingsMutation = (): UseMutationResult<
 
         return { previousSettings };
       },
-      onError: (_error, _variables, context) => {
+      onError: (error, _variables, context) => {
+        console.error('[updateUserSettings] onError', error);
         if (context?.previousSettings) {
           queryClient.setQueryData([QueryKeys.userSettings], context.previousSettings);
         }
       },
       onSuccess: (data) => {
+        console.log('[updateUserSettings] onSuccess', data);
         queryClient.setQueryData([QueryKeys.userSettings], data);
       },
       onSettled: () => {
+        console.log('[updateUserSettings] onSettled');
         void queryClient.invalidateQueries([QueryKeys.userSettings]);
       },
     },

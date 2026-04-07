@@ -104,11 +104,16 @@ export default function useSettingsMigration(enabled: boolean) {
   const updateUserSettings = useUpdateUserSettingsMutation();
 
   useEffect(() => {
+    console.log('[useSettingsMigration] Effect triggered', { enabled, attempted: migrationAttempted.current });
+
     if (!enabled || migrationAttempted.current) {
+      console.log('[useSettingsMigration] Skipping migration', { enabled, attempted: migrationAttempted.current });
       return;
     }
 
     const hasMigrated = localStorage.getItem(MIGRATION_KEY) === 'true';
+    console.log('[useSettingsMigration] Migration status', { hasMigrated });
+
     if (hasMigrated) {
       migrationAttempted.current = true;
       return;
@@ -116,11 +121,13 @@ export default function useSettingsMigration(enabled: boolean) {
 
     const migrateSettings = async () => {
       try {
+        console.log('[useSettingsMigration] Starting migration...');
         const preferences: Record<string, unknown> = {};
 
         for (const [localKey, prefKey] of Object.entries(settingsMapping)) {
           const value = getLocalStorageValue(localKey);
           if (value !== undefined) {
+            console.log(`[useSettingsMigration] Found ${localKey} = ${JSON.stringify(value)}`);
             preferences[prefKey] = value;
           }
         }
@@ -128,27 +135,33 @@ export default function useSettingsMigration(enabled: boolean) {
         for (const [localKey, prefPath] of Object.entries(speechMapping)) {
           const value = getLocalStorageValue(localKey);
           if (value !== undefined) {
+            console.log(`[useSettingsMigration] Found ${localKey} = ${JSON.stringify(value)}`);
             setNestedProperty(preferences, prefPath, value);
           }
         }
 
+        console.log('[useSettingsMigration] Collected preferences', preferences);
+
         if (Object.keys(preferences).length === 0) {
+          console.log('[useSettingsMigration] No preferences to migrate');
           localStorage.setItem(MIGRATION_KEY, 'true');
           migrationAttempted.current = true;
           return;
         }
 
+        console.log('[useSettingsMigration] Calling mutation with preferences');
         await updateUserSettings.mutateAsync({
           preferences: preferences as UserPreferences,
         });
 
+        console.log('[useSettingsMigration] Migration successful');
         localStorage.setItem(MIGRATION_KEY, 'true');
         migrationAttempted.current = true;
 
         setAutoScroll(false);
         setTimeout(() => setAutoScroll(true), 100);
       } catch (error) {
-        console.error('Failed to migrate settings to database:', error);
+        console.error('[useSettingsMigration] Migration failed:', error);
         localStorage.setItem(MIGRATION_KEY, 'true');
         migrationAttempted.current = true;
       }

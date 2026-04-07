@@ -16,9 +16,11 @@ const {
 const getUserSettingsController = async (req, res) => {
   try {
     const userId = req.user.id;
+    console.log('[getUserSettingsController] Fetching settings for userId:', userId);
     const settings = await getUserSettingsService({ getUserSettings }, userId);
 
     if (!settings) {
+      console.log('[getUserSettingsController] No settings found, returning empty preferences');
       return res.status(200).json({
         userId,
         version: 1,
@@ -26,9 +28,10 @@ const getUserSettingsController = async (req, res) => {
       });
     }
 
+    console.log('[getUserSettingsController] Settings found:', JSON.stringify(settings));
     res.status(200).json(settings);
   } catch (error) {
-    console.error('Error fetching user settings:', error);
+    console.error('[getUserSettingsController] Error fetching user settings:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -42,6 +45,9 @@ const updateUserSettingsController = async (req, res) => {
     const { preferences } = req.body;
     const userId = req.user.id;
 
+    console.log('[updateUserSettingsController] userId:', userId);
+    console.log('[updateUserSettingsController] preferences:', JSON.stringify(preferences));
+
     if (!preferences) {
       return res.status(400).json({ message: 'Preferences data is required' });
     }
@@ -52,9 +58,10 @@ const updateUserSettingsController = async (req, res) => {
 
     const settings = await updateUserSettingsService({ updateUserSettings }, userId, preferences);
 
+    console.log('[updateUserSettingsController] Update successful:', JSON.stringify(settings));
     res.status(200).json(settings);
   } catch (error) {
-    console.error('Error updating user settings:', error);
+    console.error('[updateUserSettingsController] Error updating user settings:', error);
 
     if (error.message && error.message.includes('Validation failed')) {
       return res.status(400).json({ message: error.message });
@@ -73,6 +80,9 @@ const patchUserSettingsController = async (req, res) => {
     const { preferences } = req.body;
     const userId = req.user.id;
 
+    console.log('[patchUserSettingsController] userId:', userId);
+    console.log('[patchUserSettingsController] preferences:', JSON.stringify(preferences));
+
     if (!preferences) {
       return res.status(400).json({ message: 'Preferences data is required' });
     }
@@ -83,9 +93,10 @@ const patchUserSettingsController = async (req, res) => {
 
     const settings = await patchUserSettingsService({ patchUserSettings }, userId, preferences);
 
+    console.log('[patchUserSettingsController] Patch successful:', JSON.stringify(settings));
     res.status(200).json(settings);
   } catch (error) {
-    console.error('Error patching user settings:', error);
+    console.error('[patchUserSettingsController] Error patching user settings:', error);
 
     if (error.message && error.message.includes('Validation failed')) {
       return res.status(400).json({ message: error.message });

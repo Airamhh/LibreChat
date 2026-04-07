@@ -105,7 +105,10 @@ export async function getUserSettingsService(
   methods: { getUserSettings: (userId: string) => Promise<IUserSettingsDocument | null> },
   userId: string,
 ): Promise<IUserSettingsDocument | null> {
-  return await methods.getUserSettings(userId);
+  console.log('[getUserSettingsService] Fetching settings for userId:', userId);
+  const result = await methods.getUserSettings(userId);
+  console.log('[getUserSettingsService] Result:', result ? 'found' : 'not found');
+  return result;
 }
 
 /**
@@ -121,13 +124,18 @@ export async function updateUserSettingsService(
   userId: string,
   preferences: UserPreferences,
 ): Promise<IUserSettingsDocument | null> {
+  console.log('[updateUserSettingsService] Validating preferences for userId:', userId);
   const validation = validateUserPreferences(preferences);
 
   if (!validation.isValid) {
+    console.error('[updateUserSettingsService] Validation failed:', validation.errors);
     throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
   }
 
-  return await methods.updateUserSettings(userId, preferences);
+  console.log('[updateUserSettingsService] Calling updateUserSettings method');
+  const result = await methods.updateUserSettings(userId, preferences);
+  console.log('[updateUserSettingsService] Update result:', result ? 'success' : 'failed');
+  return result;
 }
 
 /**
@@ -143,11 +151,16 @@ export async function patchUserSettingsService(
   userId: string,
   partialPreferences: Partial<UserPreferences>,
 ): Promise<IUserSettingsDocument | null> {
+  console.log('[patchUserSettingsService] Validating preferences for userId:', userId);
   const validation = validateUserPreferences(partialPreferences);
 
   if (!validation.isValid) {
+    console.error('[patchUserSettingsService] Validation failed:', validation.errors);
     throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
   }
 
-  return await methods.patchUserSettings(userId, partialPreferences);
+  console.log('[patchUserSettingsService] Calling patchUserSettings method');
+  const result = await methods.patchUserSettings(userId, partialPreferences);
+  console.log('[patchUserSettingsService] Patch result:', result ? 'success' : 'failed');
+  return result;
 }
