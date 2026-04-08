@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useRecoilState, useRecoilValue } from 'recoil';
 import { Slider, InputNumber, Switch } from '@librechat/client';
 import { cn, defaultTextProps, optionText } from '~/utils/';
+import useUpdateSetting from '~/hooks/useUpdateSetting';
 import { useLocalize } from '~/hooks';
 import store from '~/store';
 
 export default function AutoSendTextSelector() {
   const localize = useLocalize();
+  const { updateSetting } = useUpdateSetting();
 
   const speechToText = useRecoilValue(store.speechToText);
   const [autoSendText, setAutoSendText] = useRecoilState(store.autoSendText);
@@ -25,11 +27,9 @@ export default function AutoSendTextSelector() {
 
   const handleToggle = (enabled: boolean) => {
     setIsEnabled(enabled);
-    if (enabled) {
-      setAutoSendText(delayValue);
-    } else {
-      setAutoSendText(-1);
-    }
+    const newValue = enabled ? delayValue : -1;
+    setAutoSendText(newValue);
+    void updateSetting('speech.stt.autoSendText', newValue);
   };
 
   const handleSliderChange = (value: number[]) => {
@@ -37,6 +37,7 @@ export default function AutoSendTextSelector() {
     setDelayValue(newValue);
     if (isEnabled) {
       setAutoSendText(newValue);
+      void updateSetting('speech.stt.autoSendText', newValue);
     }
   };
 
@@ -45,6 +46,7 @@ export default function AutoSendTextSelector() {
     setDelayValue(newValue);
     if (isEnabled) {
       setAutoSendText(newValue);
+      void updateSetting('speech.stt.autoSendText', newValue);
     }
   };
 
@@ -81,6 +83,7 @@ export default function AutoSendTextSelector() {
                 setDelayValue(3);
                 if (isEnabled) {
                   setAutoSendText(3);
+                  void updateSetting('speech.stt.autoSendText', 3);
                 }
               }}
               min={0}

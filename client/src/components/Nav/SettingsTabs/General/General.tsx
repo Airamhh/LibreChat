@@ -4,6 +4,7 @@ import { useRecoilState } from 'recoil';
 import { Dropdown, ThemeContext } from '@librechat/client';
 import ArchivedChats from './ArchivedChats';
 import ToggleSwitch from '../ToggleSwitch';
+import useUpdateSetting from '~/hooks/useUpdateSetting';
 import { useLocalize } from '~/hooks';
 import store from '~/store';
 
@@ -145,6 +146,7 @@ export const LangSelector = ({
 
 function General() {
   const { theme, setTheme } = useContext(ThemeContext);
+  const { updateSetting } = useUpdateSetting();
 
   const [langcode, setLangcode] = useRecoilState(store.lang);
 
@@ -167,8 +169,11 @@ function General() {
       });
       setLangcode(userLang);
       Cookies.set('lang', userLang, { expires: 365 });
+
+      // Save to database
+      void updateSetting('language', userLang);
     },
-    [setLangcode],
+    [setLangcode, updateSetting],
   );
 
   return (

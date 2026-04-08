@@ -1,10 +1,12 @@
 import { useRecoilState } from 'recoil';
 import { Dropdown } from '@librechat/client';
+import useUpdateSetting from '~/hooks/useUpdateSetting';
 import { useLocalize } from '~/hooks';
 import store from '~/store';
 
 export default function LanguageSTTDropdown() {
   const localize = useLocalize();
+  const { updateSetting } = useUpdateSetting();
   const [languageSTT, setLanguageSTT] = useRecoilState<string>(store.languageSTT);
 
   const languageOptions = [
@@ -92,6 +94,7 @@ export default function LanguageSTTDropdown() {
 
   const handleSelect = (value: string) => {
     setLanguageSTT(value);
+    void updateSetting('speech.stt.language', value);
   };
 
   const labelId = 'language-stt-dropdown-label';

@@ -2,13 +2,20 @@ import React from 'react';
 import { Slider, InputNumber } from '@librechat/client';
 import { useRecoilState, useRecoilValue } from 'recoil';
 import { cn, defaultTextProps, optionText } from '~/utils';
+import useUpdateSetting from '~/hooks/useUpdateSetting';
 import { useLocalize } from '~/hooks';
 import store from '~/store';
 
 export default function DecibelSelector() {
   const localize = useLocalize();
+  const { updateSetting } = useUpdateSetting();
   const speechToText = useRecoilValue(store.speechToText);
   const [decibelValue, setDecibelValue] = useRecoilState(store.decibelValue);
+
+  const handleDecibelChange = (value: number) => {
+    setDecibelValue(value);
+    void updateSetting('speech.stt.decibelValue', value);
+  };
 
   return (
     <div className="flex items-center justify-between">
@@ -22,8 +29,8 @@ export default function DecibelSelector() {
       <div className="flex items-center justify-between">
         <Slider
           value={[decibelValue ?? -45]}
-          onValueChange={(value) => setDecibelValue(value[0])}
-          onDoubleClick={() => setDecibelValue(-45)}
+          onValueChange={(value) => handleDecibelChange(value[0])}
+          onDoubleClick={() => handleDecibelChange(-45)}
           min={-100}
           max={-30}
           step={1}
@@ -35,7 +42,7 @@ export default function DecibelSelector() {
         <InputNumber
           value={decibelValue}
           disabled={!speechToText}
-          onChange={(value) => setDecibelValue(value ? value[0] : 0)}
+          onChange={(value) => handleDecibelChange(value ? value[0] : -45)}
           min={-100}
           max={-30}
           aria-labelledby="decibel-selector-label"

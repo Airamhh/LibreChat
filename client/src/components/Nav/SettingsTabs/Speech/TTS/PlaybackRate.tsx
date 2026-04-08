@@ -2,13 +2,20 @@ import React from 'react';
 import { useRecoilState, useRecoilValue } from 'recoil';
 import { Slider, InputNumber } from '@librechat/client';
 import { cn, defaultTextProps, optionText } from '~/utils';
+import useUpdateSetting from '~/hooks/useUpdateSetting';
 import { useLocalize } from '~/hooks';
 import store from '~/store';
 
 export default function DecibelSelector() {
   const localize = useLocalize();
+  const { updateSetting } = useUpdateSetting();
   const textToSpeech = useRecoilValue(store.textToSpeech);
   const [playbackRate, setPlaybackRate] = useRecoilState(store.playbackRate);
+
+  const handlePlaybackRateChange = (value: number | null) => {
+    setPlaybackRate(value);
+    void updateSetting('speech.tts.playbackRate', value ?? undefined);
+  };
 
   return (
     <div className="flex items-center justify-between">
@@ -22,8 +29,8 @@ export default function DecibelSelector() {
       <div className="flex items-center justify-between">
         <Slider
           value={[playbackRate ?? 1]}
-          onValueChange={(value) => setPlaybackRate(value[0])}
-          onDoubleClick={() => setPlaybackRate(null)}
+          onValueChange={(value) => handlePlaybackRateChange(value[0])}
+          onDoubleClick={() => handlePlaybackRateChange(null)}
           min={0.1}
           max={2}
           step={0.1}
@@ -35,7 +42,7 @@ export default function DecibelSelector() {
         <InputNumber
           value={playbackRate ?? 1}
           disabled={!textToSpeech}
-          onChange={(value) => setPlaybackRate(value ? value[0] : 0)}
+          onChange={(value) => handlePlaybackRateChange(value ? value[0] : null)}
           min={0.1}
           max={2}
           aria-labelledby="playback-rate-label"

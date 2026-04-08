@@ -1,14 +1,31 @@
 import { useRecoilState } from 'recoil';
 import { ForkOptions } from 'librechat-data-provider';
 import { Dropdown, Switch, InfoHoverCard, ESide } from '@librechat/client';
+import useUpdateSetting from '~/hooks/useUpdateSetting';
 import { useLocalize } from '~/hooks';
 import store from '~/store';
 
 export const ForkSettings = () => {
   const localize = useLocalize();
+  const { updateSetting } = useUpdateSetting();
   const [forkSetting, setForkSetting] = useRecoilState(store.forkSetting);
   const [splitAtTarget, setSplitAtTarget] = useRecoilState(store.splitAtTarget);
   const [remember, setRemember] = useRecoilState<boolean>(store.rememberDefaultFork);
+
+  const handleForkSettingChange = (value: string) => {
+    setForkSetting(value);
+    void updateSetting('forkSetting', value);
+  };
+
+  const handleSplitAtTargetChange = (value: boolean) => {
+    setSplitAtTarget(value);
+    void updateSetting('splitAtTarget', value);
+  };
+
+  const handleRememberChange = (value: boolean) => {
+    setRemember(value);
+    void updateSetting('rememberDefaultFork', value);
+  };
 
   const forkOptions = [
     { value: ForkOptions.DIRECT_PATH, label: localize('com_ui_fork_visible') },
@@ -24,7 +41,7 @@ export const ForkSettings = () => {
           <Switch
             id="rememberDefaultFork"
             checked={remember}
-            onCheckedChange={setRemember}
+            onCheckedChange={handleRememberChange}
             className="ml-4"
             data-testid="rememberDefaultFork"
             aria-labelledby="remember-default-fork-label"
@@ -43,7 +60,7 @@ export const ForkSettings = () => {
             </div>
             <Dropdown
               value={forkSetting}
-              onChange={setForkSetting}
+              onChange={handleForkSettingChange}
               options={forkOptions}
               sizeClasses="w-[200px]"
               testId="fork-setting-dropdown"
@@ -65,7 +82,7 @@ export const ForkSettings = () => {
           <Switch
             id="splitAtTarget"
             checked={splitAtTarget}
-            onCheckedChange={setSplitAtTarget}
+            onCheckedChange={handleSplitAtTargetChange}
             className="ml-4"
             data-testid="splitAtTarget"
             aria-labelledby="split-at-target-label"

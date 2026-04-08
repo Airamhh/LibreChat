@@ -1,15 +1,18 @@
 import React from 'react';
 import { useRecoilState } from 'recoil';
 import { Switch, Label, InfoHoverCard, ESide } from '@librechat/client';
+import useUpdateSetting from '~/hooks/useUpdateSetting';
 import { useLocalize } from '~/hooks';
 import store from '~/store';
 
 export default function DisplayUsernameMessages() {
   const localize = useLocalize();
+  const { updateSetting } = useUpdateSetting();
   const [UsernameDisplay, setUsernameDisplay] = useRecoilState(store.UsernameDisplay);
 
   const handleCheckedChange = (checked: boolean) => {
     setUsernameDisplay(checked);
+    void updateSetting('usernameDisplay', checked);
   };
 
   return (

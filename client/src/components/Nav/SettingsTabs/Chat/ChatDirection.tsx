@@ -1,15 +1,20 @@
 import React from 'react';
 import { useRecoilState } from 'recoil';
 import { Button } from '@librechat/client';
+import useUpdateSetting from '~/hooks/useUpdateSetting';
 import { useLocalize } from '~/hooks';
 import store from '~/store';
 
 const ChatDirection = () => {
   const [direction, setDirection] = useRecoilState(store.chatDirection);
+  const { updateSetting } = useUpdateSetting();
   const localize = useLocalize();
 
   const toggleChatDirection = () => {
-    setDirection((prev) => (prev === 'LTR' ? 'RTL' : 'LTR'));
+    const newDirection = direction === 'LTR' ? 'RTL' : 'LTR';
+    setDirection(newDirection);
+    // Save to database
+    void updateSetting('chatDirection', newDirection);
   };
 
   return (

@@ -2,12 +2,14 @@ import React from 'react';
 import { useRecoilState } from 'recoil';
 import { Dropdown } from '@librechat/client';
 import type { Option } from '~/common';
+import useUpdateSetting from '~/hooks/useUpdateSetting';
 import { useLocalize, useTTSBrowser, useTTSExternal } from '~/hooks';
 import { logger } from '~/utils';
 import store from '~/store';
 
 export function BrowserVoiceDropdown() {
   const localize = useLocalize();
+  const { updateSetting } = useUpdateSetting();
   const { voices = [] } = useTTSBrowser();
   const [voice, setVoice] = useRecoilState(store.voice);
 
@@ -15,7 +17,8 @@ export function BrowserVoiceDropdown() {
     logger.log('Browser Voice changed:', newValue);
     const newVoice = typeof newValue === 'string' ? newValue : newValue?.value;
     if (newVoice != null) {
-      return setVoice(newVoice.toString());
+      setVoice(newVoice.toString());
+      void updateSetting('speech.tts.voice', newVoice.toString());
     }
   };
 
@@ -40,6 +43,7 @@ export function BrowserVoiceDropdown() {
 
 export function ExternalVoiceDropdown() {
   const localize = useLocalize();
+  const { updateSetting } = useUpdateSetting();
   const { voices = [] } = useTTSExternal();
   const [voice, setVoice] = useRecoilState(store.voice);
 
@@ -47,7 +51,8 @@ export function ExternalVoiceDropdown() {
     logger.log('External Voice changed:', newValue);
     const newVoice = typeof newValue === 'string' ? newValue : newValue?.value;
     if (newVoice != null) {
-      return setVoice(newVoice.toString());
+      setVoice(newVoice.toString());
+      void updateSetting('speech.tts.voice', newVoice.toString());
     }
   };
 

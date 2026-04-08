@@ -1,10 +1,39 @@
 import { WritableAtom, useAtom } from 'jotai';
 import { RecoilState, useRecoilState } from 'recoil';
 import { Switch, InfoHoverCard, ESide } from '@librechat/client';
+import type { UserPreferences } from 'librechat-data-provider';
+import useUpdateSetting from '~/hooks/useUpdateSetting';
 import { useLocalize } from '~/hooks';
 
 type LocalizeFn = ReturnType<typeof useLocalize>;
 type LocalizeKey = Parameters<LocalizeFn>[0];
+
+// Map Recoil/Jotai atom keys to UserPreferences field names
+const atomKeyToPreferenceMap: Record<string, keyof UserPreferences> = {
+  enterToSend: 'enterToSend',
+  maximizeChatSpace: 'maximizeChatSpace',
+  chatDirection: 'chatDirection',
+  autoExpandTools: 'autoExpandTools',
+  saveDrafts: 'saveDrafts',
+  rememberDefaultFork: 'rememberDefaultFork',
+  showThinking: 'showThinking',
+  enableUserMsgMarkdown: 'enableUserMsgMarkdown',
+  modularChat: 'modularChat',
+  LaTeXParsing: 'LaTeXParsing',
+  atCommand: 'atCommand',
+  plusCommand: 'plusCommand',
+  slashCommand: 'slashCommand',
+  UsernameDisplay: 'usernameDisplay',
+  autoScroll: 'autoScroll',
+  sidebarExpanded: 'sidebarExpanded',
+  keepScreenAwake: 'keepScreenAwake',
+  showScrollButton: 'showScrollButton',
+  forkSetting: 'forkSetting',
+  splitAtTarget: 'splitAtTarget',
+  saveBadgesState: 'saveBadgesState',
+  centerFormOnLanding: 'centerFormOnLanding',
+  showFooter: 'showFooter',
+};
 
 interface ToggleSwitchProps {
   stateAtom: RecoilState<boolean> | WritableAtom<boolean, [boolean], void>;
@@ -21,6 +50,13 @@ function isRecoilState<T>(atom: unknown): atom is RecoilState<T> {
   return atom != null && typeof atom === 'object' && 'key' in atom;
 }
 
+function getAtomKey(atom: RecoilState<boolean> | WritableAtom<boolean, [boolean], void>): string {
+  if ('key' in atom && typeof atom.key === 'string') {
+    return atom.key;
+  }
+  return '';
+}
+
 const RecoilToggle: React.FC<
   Omit<ToggleSwitchProps, 'stateAtom'> & { stateAtom: RecoilState<boolean> }
 > = ({
@@ -33,11 +69,19 @@ const RecoilToggle: React.FC<
   strongLabel = false,
 }) => {
   const [switchState, setSwitchState] = useRecoilState(stateAtom);
+  const { updateSetting } = useUpdateSetting();
   const localize = useLocalize();
 
   const handleCheckedChange = (value: boolean) => {
     setSwitchState(value);
     onCheckedChange?.(value);
+
+    // Save to database
+    const atomKey = getAtomKey(stateAtom);
+    const preferenceKey = atomKeyToPreferenceMap[atomKey];
+    if (preferenceKey) {
+      void updateSetting(preferenceKey, value);
+    }
   };
 
   const labelId = `${switchId}-label`;
@@ -75,11 +119,19 @@ const JotaiToggle: React.FC<
   strongLabel = false,
 }) => {
   const [switchState, setSwitchState] = useAtom(stateAtom);
+  const { updateSetting } = useUpdateSetting();
   const localize = useLocalize();
 
   const handleCheckedChange = (value: boolean) => {
     setSwitchState(value);
     onCheckedChange?.(value);
+
+    // Save to database
+    const atomKey = getAtomKey(stateAtom);
+    const preferenceKey = atomKeyToPreferenceMap[atomKey];
+    if (preferenceKey) {
+      void updateSetting(preferenceKey, value);
+    }
   };
 
   const labelId = `${switchId}-label`;

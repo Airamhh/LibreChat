@@ -1,6 +1,7 @@
 import React from 'react';
 import { useRecoilState } from 'recoil';
 import { Dropdown } from '@librechat/client';
+import useUpdateSetting from '~/hooks/useUpdateSetting';
 import { useLocalize } from '~/hooks';
 import store from '~/store';
 
@@ -10,6 +11,7 @@ interface EngineSTTDropdownProps {
 
 const EngineSTTDropdown: React.FC<EngineSTTDropdownProps> = ({ external }) => {
   const localize = useLocalize();
+  const { updateSetting } = useUpdateSetting();
   const [engineSTT, setEngineSTT] = useRecoilState<string>(store.engineSTT);
 
   const endpointOptions = external
@@ -21,6 +23,7 @@ const EngineSTTDropdown: React.FC<EngineSTTDropdownProps> = ({ external }) => {
 
   const handleSelect = (value: string) => {
     setEngineSTT(value);
+    void updateSetting('speech.stt.engine', value);
   };
 
   const labelId = 'engine-stt-dropdown-label';
