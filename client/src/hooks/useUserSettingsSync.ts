@@ -18,7 +18,7 @@ export default function useUserSettingsSync(enabled: boolean) {
 
   const { setTheme } = useContext(ThemeContext);
   const setFontSize = useSetAtom(fontSizeAtom);
-  const setLanguage = useSetAtom(language.lang);
+  const setLanguage = useSetRecoilState(language.lang);
 
   const setEnterToSend = useSetRecoilState(store.enterToSend);
   const setMaximizeChatSpace = useSetRecoilState(store.maximizeChatSpace);
