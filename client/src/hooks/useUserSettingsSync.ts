@@ -67,17 +67,37 @@ export default function useUserSettingsSync(enabled: boolean) {
       return;
     }
 
+    console.log('[useUserSettingsSync] Applying settings from database to localStorage and state');
     const prefs = userSettings.preferences as UserPreferences;
 
     if (prefs.colorTheme !== undefined && setTheme) {
-      setTheme(prefs.colorTheme);
+      console.log('[useUserSettingsSync] Setting theme:', prefs.colorTheme);
+      setTheme(prefs.colorTheme, true); // Skip DB update since this is coming from DB
+      // Also update localStorage
+      try {
+        localStorage.setItem('color-theme', prefs.colorTheme);
+      } catch (e) {
+        console.error('[useUserSettingsSync] Failed to update localStorage:', e);
+      }
     }
     if (prefs.fontSize !== undefined) {
       setFontSize(prefs.fontSize);
       applyFontSize(prefs.fontSize);
+      // Update localStorage
+      try {
+        localStorage.setItem('fontSize', JSON.stringify(prefs.fontSize));
+      } catch (e) {
+        console.error('[useUserSettingsSync] Failed to update localStorage:', e);
+      }
     }
     if (prefs.language !== undefined) {
       setLanguage(prefs.language);
+      // Update localStorage
+      try {
+        localStorage.setItem('lang', JSON.stringify(prefs.language));
+      } catch (e) {
+        console.error('[useUserSettingsSync] Failed to update localStorage:', e);
+      }
     }
 
     if (prefs.enterToSend !== undefined) {

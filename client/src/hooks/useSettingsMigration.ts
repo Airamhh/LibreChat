@@ -1,11 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useRecoilState } from 'recoil';
-import { LocalStorageKeys } from 'librechat-data-provider';
 import type { UserPreferences } from 'librechat-data-provider';
-import { useUpdateUserSettingsMutation } from '~/data-provider';
-import store from '~/store';
-
-const MIGRATION_KEY = 'settingsMigratedToDb';
+import { useUpdateUserSettingsMutation, useUserSettingsQuery } from '~/data-provider';
 
 /**
  * Maps localStorage keys to UserPreferences field names
@@ -96,32 +91,41 @@ function getLocalStorageValue(key: string): unknown {
 }
 
 /**
- * Hook that performs one-time migration of settings from localStorage to database
+ * Hook that creates user settings from localStorage if they don't exist in DB
+ * If settings exist in DB, this hook does nothing (useUserSettingsSync handles it)
  */
 export default function useSettingsMigration(enabled: boolean) {
   const migrationAttempted = useRef(false);
-  const [, setAutoScroll] = useRecoilState(store.autoScroll);
   const updateUserSettings = useUpdateUserSettingsMutation();
+  const { data: userSettings, isSuccess } = useUserSettingsQuery({
+    enabled,
+  });
 
   useEffect(() => {
-    console.log('[useSettingsMigration] Effect triggered', { enabled, attempted: migrationAttempted.current });
+    console.log('[useSettingsMigration] Effect triggered', {
+      enabled,
+      attempted: migrationAttempted.current,
+      isSuccess,
+      hasPreferences: !!userSettings?.preferences
+    });
 
-    if (!enabled || migrationAttempted.current) {
-      console.log('[useSettingsMigration] Skipping migration', { enabled, attempted: migrationAttempted.current });
+    if (!enabled || migrationAttempted.current || !isSuccess) {
       return;
     }
 
-    const hasMigrated = localStorage.getItem(MIGRATION_KEY) === 'true';
-    console.log('[useSettingsMigration] Migration status', { hasMigrated });
+    // If settings already exist in database (non-empty preferences), don't migrate
+    const hasExistingSettings = userSettings?.preferences &&
+      Object.keys(userSettings.preferences).length > 0;
 
-    if (hasMigrated) {
+    if (hasExistingSettings) {
+      console.log('[useSettingsMigration] Settings already exist in DB, skipping migration');
       migrationAttempted.current = true;
       return;
     }
 
     const migrateSettings = async () => {
       try {
-        console.log('[useSettingsMigration] Starting migration...');
+        console.log('[useSettingsMigration] No settings in DB, creating from localStorage...');
         const preferences: Record<string, unknown> = {};
 
         for (const [localKey, prefKey] of Object.entries(settingsMapping)) {
@@ -142,32 +146,21 @@ export default function useSettingsMigration(enabled: boolean) {
 
         console.log('[useSettingsMigration] Collected preferences', preferences);
 
-        if (Object.keys(preferences).length === 0) {
-          console.log('[useSettingsMigration] No preferences to migrate');
-          localStorage.setItem(MIGRATION_KEY, 'true');
-          migrationAttempted.current = true;
-          return;
-        }
-
-        console.log('[useSettingsMigration] Calling mutation with preferences');
+        // Always create settings (even if empty) to establish the user's preferences document
+        console.log('[useSettingsMigration] Creating settings in database');
         await updateUserSettings.mutateAsync({
           preferences: preferences as UserPreferences,
         });
 
         console.log('[useSettingsMigration] Migration successful');
-        localStorage.setItem(MIGRATION_KEY, 'true');
         migrationAttempted.current = true;
-
-        setAutoScroll(false);
-        setTimeout(() => setAutoScroll(true), 100);
       } catch (error) {
         console.error('[useSettingsMigration] Migration failed:', error);
-        localStorage.setItem(MIGRATION_KEY, 'true');
         migrationAttempted.current = true;
       }
     };
 
     void migrateSettings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled]);
+  }, [enabled, isSuccess, userSettings]);
 }

@@ -5,13 +5,15 @@ import { usePatchUserSettingsMutation } from '~/data-provider';
 type SettingPath = keyof UserPreferences | `speech.${string}`;
 
 /**
- * Hook to update user settings with dual-write to localStorage and database
+ * Hook to update user settings with persistence to database
+ * The database is the source of truth, and settings sync back via useUserSettingsSync
  */
 export default function useUpdateSetting() {
   const patchSettings = usePatchUserSettingsMutation();
 
   const updateSetting = useCallback(
     async (path: SettingPath, value: unknown) => {
+      console.log('[useUpdateSetting] Updating setting:', path, '=', value);
       const preferences: Partial<UserPreferences> = {};
 
       if (path.startsWith('speech.')) {
@@ -38,8 +40,9 @@ export default function useUpdateSetting() {
 
       try {
         await patchSettings.mutateAsync({ preferences });
+        console.log('[useUpdateSetting] Successfully updated setting in database');
       } catch (error) {
-        console.error('Failed to update settings in database:', error);
+        console.error('[useUpdateSetting] Failed to update settings in database:', error);
       }
     },
     [patchSettings],

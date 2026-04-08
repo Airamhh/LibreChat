@@ -8,12 +8,13 @@ const THEME_NAME_KEY = 'theme-name';
 
 type ThemeContextType = {
   theme: string; // 'light' | 'dark' | 'system'
-  setTheme: (theme: string) => void;
+  setTheme: (theme: string, skipDbUpdate?: boolean) => void;
   themeRGB?: IThemeRGB;
   setThemeRGB: (colors?: IThemeRGB) => void;
   themeName?: string;
   setThemeName: (name?: string) => void;
   resetTheme: () => void;
+  setDbUpdateCallback?: (callback: ((theme: string) => void) | null) => void;
 };
 
 // Export ThemeContext so it can be imported from hooks
@@ -123,13 +124,27 @@ export function ThemeProvider({
   // Track if props have been initialized
   const initialized = useRef(false);
 
-  const setTheme = useCallback((newTheme: string) => {
+  // Callback for database updates (set by useAppStartup)
+  const dbUpdateCallback = useRef<((theme: string) => void) | null>(null);
+
+  const setDbUpdateCallback = useCallback((callback: ((theme: string) => void) | null) => {
+    dbUpdateCallback.current = callback;
+  }, []);
+
+  const setTheme = useCallback((newTheme: string, skipDbUpdate = false) => {
+    console.log('[ThemeProvider] setTheme called:', newTheme, 'skipDbUpdate:', skipDbUpdate);
     setThemeState(newTheme);
     if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(THEME_KEY, newTheme);
     } catch {
       // localStorage not available
+    }
+
+    // Update database if callback is set and not skipping
+    if (!skipDbUpdate && dbUpdateCallback.current) {
+      console.log('[ThemeProvider] Calling DB update callback');
+      dbUpdateCallback.current(newTheme);
     }
   }, []);
 
@@ -236,8 +251,9 @@ export function ThemeProvider({
       themeName,
       setThemeName,
       resetTheme,
+      setDbUpdateCallback,
     }),
-    [theme, setTheme, themeRGB, setThemeRGB, themeName, setThemeName, resetTheme],
+    [theme, setTheme, themeRGB, setThemeRGB, themeName, setThemeName, resetTheme, setDbUpdateCallback],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

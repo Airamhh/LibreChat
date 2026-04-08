@@ -1,13 +1,15 @@
-import { useEffect } from 'react';
+import { useEffect, useContext } from 'react';
 import { useRecoilState } from 'recoil';
 import TagManager from 'react-gtm-module';
 import { LocalStorageKeys, PermissionTypes, Permissions } from 'librechat-data-provider';
 import type { TStartupConfig, TUser } from 'librechat-data-provider';
 import { useMCPToolsQuery, useMCPServersQuery } from '~/data-provider';
+import { ThemeContext } from '@librechat/client';
 import { cleanupTimestampedStorage } from '~/utils/timestamps';
 import useUserSettingsSync from '../useUserSettingsSync';
 import useSettingsMigration from '../useSettingsMigration';
 import useSpeechSettingsInit from './useSpeechSettingsInit';
+import useUpdateSetting from '../useUpdateSetting';
 import { useHasAccess } from '~/hooks';
 import store from '~/store';
 
@@ -19,6 +21,8 @@ export default function useAppStartup({
   user?: TUser;
 }) {
   const [defaultPreset, setDefaultPreset] = useRecoilState(store.defaultPreset);
+  const { setDbUpdateCallback } = useContext(ThemeContext);
+  const { updateSetting } = useUpdateSetting();
   const canUseMcp = useHasAccess({
     permissionType: PermissionTypes.MCP_SERVERS,
     permission: Permissions.USE,
@@ -27,6 +31,24 @@ export default function useAppStartup({
   useSpeechSettingsInit(!!user);
   useUserSettingsSync(!!user);
   useSettingsMigration(!!user);
+
+  // Set up database update callback for theme changes
+  useEffect(() => {
+    if (!user || !setDbUpdateCallback) {
+      return;
+    }
+
+    const callback = (theme: string) => {
+      console.log('[useAppStartup] Theme changed, updating database:', theme);
+      void updateSetting('colorTheme', theme);
+    };
+
+    setDbUpdateCallback(callback);
+
+    return () => {
+      setDbUpdateCallback(null);
+    };
+  }, [user, setDbUpdateCallback, updateSetting]);
 
   const { data: loadedServers, isLoading: serversLoading } = useMCPServersQuery({
     enabled: canUseMcp,
