@@ -294,6 +294,14 @@ const getEntraGroupDetailsBatch = async (accessToken, sub, groupIds) => {
       return [];
     }
 
+    // Safety check: warn if user has an unusually large number of groups
+    const MAX_REASONABLE_GROUPS = 200;
+    if (groupIds.length > MAX_REASONABLE_GROUPS) {
+      logger.warn(
+        `[getEntraGroupDetailsBatch] User has ${groupIds.length} groups (>${MAX_REASONABLE_GROUPS}). This may impact performance.`,
+      );
+    }
+
     const graphClient = await createGraphClient(accessToken, sub);
     const allGroupDetails = [];
     const batchSize = 20; // Microsoft Graph batch API limit
