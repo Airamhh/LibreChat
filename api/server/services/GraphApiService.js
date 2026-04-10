@@ -279,6 +279,73 @@ const getGroupOwners = async (accessToken, sub, groupId) => {
     return [];
   }
 };
+
+/**
+ * Get detailed information for specific Entra ID groups using batch requests
+ * Efficiently fetches group details for multiple groups in batches of 20 (Microsoft Graph limit)
+ * @param {string} accessToken - OpenID Connect access token
+ * @param {string} sub - Subject identifier
+ * @param {string[]} groupIds - Array of group IDs (GUIDs) to fetch details for
+ * @returns {Promise<Array<{id: string, name: string, description?: string, email?: string}>>} Array of group details
+ */
+const getEntraGroupDetailsBatch = async (accessToken, sub, groupIds) => {
+  try {
+    if (!groupIds || groupIds.length === 0) {
+      return [];
+    }
+
+    const graphClient = await createGraphClient(accessToken, sub);
+    const allGroupDetails = [];
+    const batchSize = 20; // Microsoft Graph batch API limit
+
+    // Process groups in batches of 20
+    for (let i = 0; i < groupIds.length; i += batchSize) {
+      const batchIds = groupIds.slice(i, i + batchSize);
+
+      // Create batch request
+      const batchRequest = {
+        requests: batchIds.map((id, index) => ({
+          id: index.toString(),
+          method: 'GET',
+          url: `/groups/${id}?$select=id,displayName,mail,description`,
+        })),
+      };
+
+      try {
+        const batchResponse = await graphClient.api('/$batch').post(batchRequest);
+
+        // Process batch responses
+        if (batchResponse.responses) {
+          for (const response of batchResponse.responses) {
+            if (response.status === 200 && response.body) {
+              allGroupDetails.push({
+                id: response.body.id,
+                name: response.body.displayName,
+                email: response.body.mail,
+                description: response.body.description,
+              });
+            } else {
+              logger.warn(
+                `[getEntraGroupDetailsBatch] Failed to fetch group in batch. Status: ${response.status}`,
+              );
+            }
+          }
+        }
+      } catch (batchError) {
+        logger.error(
+          `[getEntraGroupDetailsBatch] Error processing batch ${i / batchSize + 1}:`,
+          batchError,
+        );
+        // Continue with next batch even if one fails
+      }
+    }
+
+    return allGroupDetails;
+  } catch (error) {
+    logger.error('[getEntraGroupDetailsBatch] Error fetching group details:', error);
+    return [];
+  }
+};
 /**
  * Search for contacts (users only) using Microsoft Graph /me/people endpoint
  * Returns mapped TPrincipalSearchResult objects for users only
@@ -535,6 +602,7 @@ module.exports = {
   createGraphClient,
   getUserEntraGroups,
   getUserOwnedEntraGroups,
+  getEntraGroupDetailsBatch,
   testGraphApiAccess,
   searchEntraIdPrincipals,
   exchangeTokenForGraphAccess,

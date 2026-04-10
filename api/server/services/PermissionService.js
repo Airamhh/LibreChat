@@ -6,6 +6,7 @@ const {
   entraIdPrincipalFeatureEnabled,
   getUserOwnedEntraGroups,
   getUserEntraGroups,
+  getEntraGroupDetailsBatch,
   getGroupMembers,
   getGroupOwners,
 } = require('~/server/services/GraphApiService');
@@ -461,9 +462,14 @@ const ensureGroupPrincipalExists = async function (principal, authContext = null
 };
 
 /**
- * Synchronize user's Entra ID group memberships on sign-in
- * Gets user's group IDs from GraphAPI and updates memberships only for existing groups in database
- * Optionally includes groups the user owns if ENTRA_ID_INCLUDE_OWNERS_AS_MEMBERS is enabled
+ * Sync user's Entra ID group memberships with auto-creation of missing groups
+ * Optimized approach:
+ * 1. First try to add user to existing groups (fast, no Graph API calls)
+ * 2. Query DB to find which groups don't exist
+ * 3. For missing groups only, fetch details from Graph API in batches
+ * 4. Create missing groups using syncUserEntraGroups
+ * 5. Remove user from groups they're no longer member of
+ *
  * @param {Object} user - User object with authentication context
  * @param {string} user.openidId - User's OpenID subject identifier
  * @param {string} user.idOnTheSource - User's Entra ID (oid from token claims)
@@ -478,6 +484,7 @@ const syncUserEntraGroupMemberships = async (user, accessToken, session = null) 
       return;
     }
 
+    // Step 1: Get all group IDs user should be member of
     const memberGroupIds = await getUserEntraGroups(accessToken, user.openidId);
     let allGroupIds = [...(memberGroupIds || [])];
 
@@ -492,12 +499,30 @@ const syncUserEntraGroupMemberships = async (user, accessToken, session = null) 
     }
 
     if (!allGroupIds || allGroupIds.length === 0) {
+      logger.debug(
+        `[PermissionService.syncUserEntraGroupMemberships] No groups found for user ${user.email}`,
+      );
+      // Still need to remove user from any existing Entra groups
+      const sessionOptions = session ? { session } : {};
+      await db.bulkUpdateGroups(
+        {
+          source: 'entra',
+          memberIds: user.idOnTheSource,
+        },
+        { $pullAll: { memberIds: [user.idOnTheSource] } },
+        sessionOptions,
+      );
       return;
     }
 
+    logger.info(
+      `[PermissionService.syncUserEntraGroupMemberships] Syncing ${allGroupIds.length} groups for user ${user.email}`,
+    );
+
     const sessionOptions = session ? { session } : {};
 
-    await db.bulkUpdateGroups(
+    // Step 2: Try to add user to existing groups (fast operation)
+    const addResult = await db.bulkUpdateGroups(
       {
         idOnTheSource: { $in: allGroupIds },
         source: 'entra',
@@ -507,7 +532,60 @@ const syncUserEntraGroupMemberships = async (user, accessToken, session = null) 
       sessionOptions,
     );
 
-    await db.bulkUpdateGroups(
+    logger.debug(
+      `[PermissionService.syncUserEntraGroupMemberships] Added user to ${addResult.modifiedCount || 0} existing groups`,
+    );
+
+    // Step 3: Find which groups don't exist in DB
+    const Group = mongoose.models.Group;
+    const existingGroupsQuery = Group.find(
+      { idOnTheSource: { $in: allGroupIds }, source: 'entra' },
+      { idOnTheSource: 1 },
+    );
+    if (session) {
+      existingGroupsQuery.session(session);
+    }
+    const existingGroups = await existingGroupsQuery.lean();
+    const existingGroupIds = new Set(existingGroups.map((g) => g.idOnTheSource));
+
+    const missingGroupIds = allGroupIds.filter((id) => !existingGroupIds.has(id));
+
+    if (missingGroupIds.length > 0) {
+      logger.info(
+        `[PermissionService.syncUserEntraGroupMemberships] Found ${missingGroupIds.length} groups that don't exist, fetching details...`,
+      );
+
+      // Step 4: Fetch details only for missing groups (optimized batch request)
+      const groupDetails = await getEntraGroupDetailsBatch(
+        accessToken,
+        user.openidId,
+        missingGroupIds,
+      );
+
+      if (groupDetails.length > 0) {
+        logger.info(
+          `[PermissionService.syncUserEntraGroupMemberships] Creating ${groupDetails.length} new groups`,
+        );
+
+        // Step 5: Create missing groups and add user membership using syncUserEntraGroups
+        const syncResult = await db.syncUserEntraGroups(user._id, groupDetails, session);
+
+        logger.info(
+          `[PermissionService.syncUserEntraGroupMemberships] Successfully created ${syncResult.addedGroups.length} groups`,
+        );
+      } else {
+        logger.warn(
+          `[PermissionService.syncUserEntraGroupMemberships] Could not fetch details for ${missingGroupIds.length} missing groups`,
+        );
+      }
+    } else {
+      logger.debug(
+        `[PermissionService.syncUserEntraGroupMemberships] All groups already exist in database`,
+      );
+    }
+
+    // Step 6: Remove user from Entra groups they're no longer member of
+    const removeResult = await db.bulkUpdateGroups(
       {
         source: 'entra',
         memberIds: user.idOnTheSource,
@@ -516,8 +594,17 @@ const syncUserEntraGroupMemberships = async (user, accessToken, session = null) 
       { $pullAll: { memberIds: [user.idOnTheSource] } },
       sessionOptions,
     );
+
+    logger.debug(
+      `[PermissionService.syncUserEntraGroupMemberships] Removed user from ${removeResult.modifiedCount || 0} groups`,
+    );
+
+    logger.info(
+      `[PermissionService.syncUserEntraGroupMemberships] Successfully synced groups for user ${user.email}`,
+    );
   } catch (error) {
     logger.error(`[PermissionService.syncUserEntraGroupMemberships] Error syncing groups:`, error);
+    throw error; // Re-throw to allow calling code to handle
   }
 };
 
