@@ -464,11 +464,12 @@ const ensureGroupPrincipalExists = async function (principal, authContext = null
 /**
  * Sync user's Entra ID group memberships with auto-creation of missing groups
  * Optimized approach:
- * 1. First try to add user to existing groups (fast, no Graph API calls)
- * 2. Query DB to find which groups don't exist
- * 3. For missing groups only, fetch details from Graph API in batches
- * 4. Create missing groups using syncUserEntraGroups
- * 5. Remove user from groups they're no longer member of
+ * 1. Get all group IDs user should be member of from Entra
+ * 2. Try to add user to existing groups (fast, no Graph API calls)
+ * 3. Query DB to identify which groups don't exist (indexed query, fast)
+ * 4. For missing groups only, fetch details from Graph API in batches
+ * 5. Create missing groups using syncUserEntraGroups
+ * 6. Remove user from groups they're no longer member of
  *
  * @param {Object} user - User object with authentication context
  * @param {string} user.openidId - User's OpenID subject identifier
@@ -537,38 +538,20 @@ const syncUserEntraGroupMemberships = async (user, accessToken, session = null) 
       `[PermissionService.syncUserEntraGroupMemberships] Added user to ${addResult.modifiedCount || 0} existing groups`,
     );
 
-    // Step 3: Check if we need to find missing groups
-    // Optimization: If no groups were modified AND we have groups to sync,
-    // it means some groups might not exist. But if all were modified, all exist.
-    let missingGroupIds = [];
-
-    // We can skip the query if modifiedCount + matchedCount equals total groups
-    // matchedCount represents groups where user was already a member
-    const totalProcessed = (addResult.modifiedCount || 0) + (addResult.matchedCount || 0);
-
-    if (totalProcessed < allGroupIds.length) {
-      // Some groups don't exist, need to query DB to find which ones
-      logger.debug(
-        `[PermissionService.syncUserEntraGroupMemberships] Processed ${totalProcessed}/${allGroupIds.length} groups, checking for missing groups`,
-      );
-
-      const Group = mongoose.models.Group;
-      const existingGroupsQuery = Group.find(
-        { idOnTheSource: { $in: allGroupIds }, source: 'entra' },
-        { idOnTheSource: 1 },
-      );
-      if (session) {
-        existingGroupsQuery.session(session);
-      }
-      const existingGroups = await existingGroupsQuery.lean();
-      const existingGroupIds = new Set(existingGroups.map((g) => g.idOnTheSource));
-
-      missingGroupIds = allGroupIds.filter((id) => !existingGroupIds.has(id));
-    } else {
-      logger.debug(
-        `[PermissionService.syncUserEntraGroupMemberships] All ${allGroupIds.length} groups already exist in database`,
-      );
+    // Step 3: Find which groups don't exist in DB
+    // Query to identify missing groups - this is a fast operation with indexed fields
+    const Group = mongoose.models.Group;
+    const existingGroupsQuery = Group.find(
+      { idOnTheSource: { $in: allGroupIds }, source: 'entra' },
+      { idOnTheSource: 1 },
+    );
+    if (session) {
+      existingGroupsQuery.session(session);
     }
+    const existingGroups = await existingGroupsQuery.lean();
+    const existingGroupIds = new Set(existingGroups.map((g) => g.idOnTheSource));
+
+    const missingGroupIds = allGroupIds.filter((id) => !existingGroupIds.has(id));
 
     if (missingGroupIds.length > 0) {
       logger.info(
@@ -600,7 +583,7 @@ const syncUserEntraGroupMemberships = async (user, accessToken, session = null) 
       }
     } else {
       logger.debug(
-        `[PermissionService.syncUserEntraGroupMemberships] All groups already exist in database`,
+        `[PermissionService.syncUserEntraGroupMemberships] All ${allGroupIds.length} groups already exist in database`,
       );
     }
 
