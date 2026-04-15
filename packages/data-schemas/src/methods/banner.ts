@@ -2,7 +2,6 @@ import type { Model, ClientSession, FilterQuery } from 'mongoose';
 import { Types } from 'mongoose';
 import { v5 as uuidv5 } from 'uuid';
 import { PrincipalType } from 'librechat-data-provider';
-import DOMPurify from 'isomorphic-dompurify';
 import logger from '~/config/winston';
 import type { IBanner, IUser, IRole, IGroup } from '~/types';
 
@@ -161,12 +160,6 @@ export function createBannerMethods(mongoose: typeof import('mongoose')) {
         throw new Error('Banner message is required');
       }
       
-      // Sanitize HTML message to prevent XSS
-      const cleanMessage = DOMPurify.sanitize(data.message, {
-        ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'a', 'span', 'div', 'ul', 'ol', 'li'],
-        ALLOWED_ATTR: ['href', 'target', 'class'],
-      });
-      
       // Validate date range
       if (data.displayTo && data.displayFrom && data.displayTo < data.displayFrom) {
         throw new Error('displayTo must be after displayFrom');
@@ -186,13 +179,13 @@ export function createBannerMethods(mongoose: typeof import('mongoose')) {
       }
       
       // Generate unique bannerId
-      const bannerId = uuidv5(cleanMessage, NAMESPACE);
+      const bannerId = uuidv5(data.message.trim(), NAMESPACE);
       
       // Create banner
       const bannerData: Partial<IBanner> = {
         ...data,
         bannerId,
-        message: cleanMessage,
+        message: data.message.trim(),
         displayFrom: data.displayFrom || new Date(),
         isActive: data.isActive ?? true,
         priority: data.priority ?? 50,
@@ -224,12 +217,12 @@ export function createBannerMethods(mongoose: typeof import('mongoose')) {
     const Banner = mongoose.models.Banner as Model<IBanner>;
     
     try {
-      // Sanitize message if provided
+      // Validate message if provided
       if (updates.message) {
-        updates.message = DOMPurify.sanitize(updates.message, {
-          ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'a', 'span', 'div', 'ul', 'ol', 'li'],
-          ALLOWED_ATTR: ['href', 'target', 'class'],
-        });
+        updates.message = updates.message.trim();
+        if (!updates.message) {
+          throw new Error('Banner message cannot be empty');
+        }
       }
       
       // Validate date range
@@ -499,7 +492,7 @@ export function createBannerMethods(mongoose: typeof import('mongoose')) {
     getBannerById,
     validateRolesExist,
     validateGroupsExist,
-    validateUsersExist,
+    validateUsersExist
   };
 }
 
