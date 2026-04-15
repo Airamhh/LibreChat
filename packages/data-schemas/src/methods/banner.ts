@@ -84,7 +84,7 @@ export function createBannerMethods(mongoose: typeof import('mongoose')) {
         // Banners targeted to this specific user
         { 
           audienceMode: 'user',
-          targetUserIds: user._id.toString(),
+          targetUserIds: { $in: [user._id.toString()] },
         },
       ];
       
@@ -92,7 +92,7 @@ export function createBannerMethods(mongoose: typeof import('mongoose')) {
       if (user.role) {
         audienceConditions.push({
           audienceMode: 'role',
-          targetRoleIds: user.role,
+          targetRoleIds: { $in: [user.role] },
         });
       }
       

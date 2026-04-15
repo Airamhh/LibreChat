@@ -6,16 +6,85 @@ Guía completa con ejemplos reales para crear banners de todos los tipos en Libr
 
 ## 📋 Tabla de Contenidos
 
-1. [Banner Global Simple](#1-banner-global-simple)
-2. [Banner con Fechas Programadas](#2-banner-con-fechas-programadas)
-3. [Banner por Rol](#3-banner-por-rol)
-4. [Banner por Grupo](#4-banner-por-grupo)
-5. [Banner para Usuarios Específicos](#5-banner-para-usuarios-específicos)
-6. [Banner Persistente (No Dismissible)](#6-banner-persistente-no-dismissible)
-7. [Banner con Prioridad Alta](#7-banner-con-prioridad-alta)
-8. [Banner con HTML Formateado](#8-banner-con-html-formateado)
-9. [Combinaciones Avanzadas](#9-combinaciones-avanzadas)
-10. [Usando la API Directamente](#10-usando-la-api-directamente)
+1. [Carrusel Multi-Banner - Cómo Funciona](#0-carrusel-multi-banner---cómo-funciona) ⭐
+2. [Banner Global Simple](#1-banner-global-simple)
+3. [Banner con Fechas Programadas](#2-banner-con-fechas-programadas)
+4. [Banner por Rol](#3-banner-por-rol)
+5. [Banner por Grupo](#4-banner-por-grupo)
+6. [Banner para Usuarios Específicos](#5-banner-para-usuarios-específicos)
+7. [Banner Persistente (No Dismissible)](#6-banner-persistente-no-dismissible)
+8. [Banner con Prioridad Alta](#7-banner-con-prioridad-alta)
+9. [Banner con HTML Formateado](#8-banner-con-html-formateado)
+10. [Combinaciones Avanzadas](#9-combinaciones-avanzadas)
+11. [Usando la API Directamente](#10-usando-la-api-directamente)
+12. [Testing con Script Automático](#11-testing-con-script-automático) 🚀
+
+---
+
+## 0. Carrusel Multi-Banner - Cómo Funciona
+
+### 🎠 Funcionamiento del Carrusel
+
+Cuando hay **múltiples banners activos**, LibreChat muestra un **carrusel automático** con las siguientes características:
+
+#### Características Principales
+
+✅ **Rotación Automática**
+- Los banners cambian automáticamente cada **8 segundos**
+- La rotación se pausa al pasar el mouse sobre el banner
+- Se reanuda al quitar el mouse
+
+✅ **Navegación Manual**
+- **Flechas izquierda/derecha** (◀ ▶) para navegar manualmente
+- **Puntos de paginación** (● ● ●) debajo del mensaje
+- Click en cualquier punto para ir directamente a ese banner
+
+✅ **Banners Persistentes**
+- Los banners con `persistable: true` **NO bloquean** la navegación
+- **Sí puedes navegar** entre banners aunque uno sea persistente
+- El botón de cerrar (✕) solo desaparece en banners persistentes
+- Las flechas y puntos **siempre funcionan** si hay múltiples banners
+
+#### Visualización
+
+```
+Si hay 1 banner:
+┌────────────────────────────────────────────────┐
+│  📢 Mensaje del banner...                   ✕ │
+└────────────────────────────────────────────────┘
+(Sin flechas, sin puntos)
+
+Si hay múltiples banners:
+┌────────────────────────────────────────────────┐
+│ ◀  📢 Mensaje del banner...                 ✕ ▶│
+│              ● ● ○ ● ●                         │
+└────────────────────────────────────────────────┘
+(Con flechas, puntos de navegación)
+
+Banner persistente con otros banners:
+┌────────────────────────────────────────────────┐
+│ ◀  ⚠️ Mensaje importante...                   ▶│
+│              ○ ● ● ●                           │
+└────────────────────────────────────────────────┘
+(Con flechas, sin botón ✕)
+```
+
+#### Límites y Ordenamiento
+
+- **Máximo 10 banners** simultáneos (configurable en backend)
+- Ordenamiento automático por:
+  1. **Prioridad** (descendente 100→0)
+  2. **Order** (ascendente 0→∞)
+  3. **Fecha** (más reciente primero)
+
+#### Filtrado de Audience
+
+Solo se muestran banners que cumplan **al menos una** de estas condiciones:
+- `audienceMode: 'global'` → Todos los usuarios
+- `audienceMode: 'role'` → Solo usuarios con ese rol
+- `audienceMode: 'group'` → Solo miembros del grupo
+- `audienceMode: 'user'` → Solo ese usuario específico
+- `isPublic: true` → Visible para no autenticados
 
 ---
 
@@ -642,6 +711,151 @@ curl -X DELETE http://localhost:3080/api/admin/banners/BANNER_ID \
 1. ✅ Verificar `displayTo` está configurado
 2. ✅ Verificar `isActive = true` (desactivar para ocultar)
 3. ✅ Usar DELETE para eliminar permanentemente
+
+---
+
+## 11. Testing con Script Automático
+
+LibreChat incluye un script para crear, probar y limpiar banners de ejemplo automáticamente.
+
+### Comandos Disponibles
+
+```bash
+# Crear 15 banners de ejemplo de todos los tipos
+npm run test-banners create
+
+# Ver estadísticas de banners de prueba
+npm run test-banners stats
+
+# Eliminar todos los banners de prueba
+npm run test-banners delete
+# O el alias:
+npm run test-banners clean
+```
+
+### Banners Creados Automáticamente
+
+El script crea **15 banners de prueba** con el prefijo `[TEST]`:
+
+1. **Global simple** - Bienvenida básica
+2. **Global con fechas** - Mantenimiento programado
+3. **Por rol ADMIN** - Solo administradores
+4. **Multi-rol ADMIN+USER** - Varios roles
+5. **Por grupo** - Equipo específico (si existe)
+6. **Por usuario** - Personalizado (si existe)
+7. **Persistente** - No dismissible, prioridad alta
+8. **HTML rico** - Con formato y listas
+9. **Baja prioridad** - Tip del día
+10. **Inactivo** - Para probar toggle
+11. **Futuro** - Programado para mañana
+12. **Expirado** - Ya pasó la fecha
+13. **Emergencia** - Prioridad máxima (100)
+14. **Multi-rol con fechas** - Admins+Moderators
+15. **Informativo** - Sin fecha de expiración
+
+### Ejemplo de Uso
+
+```bash
+# 1. Crear banners de prueba
+npm run test-banners create
+
+# Output:
+# ✓ Successfully created: 15 banners
+# 
+# Created test banners summary:
+# 1. 🟢 Active | ❌ Dismissible | GLOBAL | P50 | ¡Bienvenido...
+# 2. 🟢 Active | ❌ Dismissible | GLOBAL | P85 | Mantenimiento...
+# 3. 🟢 Active | ❌ Dismissible | ROLE | P70 | Solo Admins...
+# ...
+
+# 2. Ver estadísticas
+npm run test-banners stats
+
+# Output:
+# Total test banners: 15
+#   Active: 14
+#   Inactive: 1
+#   Persistent: 3
+#   Dismissible: 12
+# By audience type:
+#   Global: 10
+#   Role: 3
+#   Group: 1
+#   User: 1
+
+# 3. Probar en el frontend
+# Abre http://localhost:3080 y verás el carrusel con flechas
+
+# 4. Limpiar después de probar
+npm run test-banners delete
+
+# Output:
+# ✓ Successfully deleted: 15 test banners
+```
+
+### Características del Script
+
+✅ **IDs únicos**: Cada ejecución genera bannerIds con timestamp  
+✅ **Seguro**: Solo elimina banners con prefijo `[TEST]`  
+✅ **Flexible**: Adapta banners según usuarios/grupos disponibles  
+✅ **Informativo**: Muestra resumen visual con emojis  
+✅ **Estadísticas**: Distribución por audience, prioridad, estado
+
+### Testing Workflow Recomendado
+
+```bash
+# 1. Crear banners de prueba
+npm run test-banners create
+
+# 2. Verificar en la UI que aparecen:
+#    - Carrusel con flechas (◀ ▶)
+#    - Puntos de navegación (● ● ●)
+#    - Rotación automática cada 8 segundos
+#    - Banners persistentes sin botón ✕
+
+# 3. Probar funcionalidades:
+#    - Login como ADMIN → deberías ver banners de rol
+#    - Navegar con flechas y puntos
+#    - Dismiss banners normales (desaparecen)
+#    - Intentar dismiss persistentes (no se puede)
+#    - Pasar mouse → pausa rotación
+
+# 4. Ver logs del backend:
+cat api/logs/combined.log | grep "getActiveBanners"
+# Debería mostrar: "Found N banners for user X"
+
+# 5. Limpiar
+npm run test-banners delete
+```
+
+### Troubleshooting con el Script
+
+**Problema**: "No test banners found"
+```bash
+# Verificar en MongoDB
+mongo librechat --eval 'db.banners.find({message: /^\[TEST\]/}).count()'
+```
+
+**Problema**: Solo veo 1 banner de 15
+```bash
+# 1. Verificar que el backend devuelve múltiples
+curl http://localhost:3080/api/banner/list \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# 2. Ver estadísticas
+npm run test-banners stats
+
+# 3. Verificar logs
+tail -f api/logs/combined.log | grep banner
+```
+
+**Problema**: Banners no visibles por audienceMode
+```bash
+# Ver tu rol de usuario
+mongo librechat --eval 'db.users.findOne({email: "tu@email.com"}, {role: 1})'
+
+# Los banners con targetRoleIds debe incluir tu rol
+```
 
 ---
 
