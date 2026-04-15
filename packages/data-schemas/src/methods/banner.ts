@@ -1,7 +1,6 @@
 import type { Model, ClientSession, FilterQuery } from 'mongoose';
 import { Types } from 'mongoose';
 import { v5 as uuidv5 } from 'uuid';
-import { PrincipalType } from 'librechat-data-provider';
 import logger from '~/config/winston';
 import type { IBanner, IUser, IRole, IGroup } from '~/types';
 
@@ -55,60 +54,60 @@ export function createBannerMethods(mongoose: typeof import('mongoose')) {
         return query.lean();
       }
       
-      // Get user principals (USER, ROLE, GROUPs, PUBLIC)
-      const { getUserPrincipals } = require('./userGroup');
-      const principals = await getUserPrincipals({
-        userId: user._id,
-        role: user.role,
-      }, options?.session);
+      // Get user's groups
+      const Group = mongoose.models.Group as Model<IGroup>;
+      const User = mongoose.models.User as Model<IUser>;
       
-      // Extract role and group IDs from principals
-      const roleIds = principals
-        .filter((p: any) => p.principalType === PrincipalType.ROLE)
-        .map((p: any) => p.principalId as string);
+      // Find user's idOnTheSource for group lookup
+      const userDoc = await User.findById(user._id, 'idOnTheSource').session(options?.session || null).lean();
+      const userIdOnTheSource = userDoc?.idOnTheSource || user._id.toString();
       
-      const groupIds = principals
-        .filter((p: any) => p.principalType === PrincipalType.GROUP)
-        .map((p: any) => p.principalId as Types.ObjectId);
+      // Find all groups the user is a member of
+      const userGroups = await Group.find(
+        { memberIds: userIdOnTheSource },
+        '_id'
+      ).session(options?.session || null).lean();
       
-      // Build audience query
-      const audienceQuery: FilterQuery<IBanner> = {
-        $or: [
-          // Legacy banners (no audienceMode)
-          { audienceMode: { $exists: false } },
-          
-          // Global banners
-          { audienceMode: 'global' },
-          
-          // Public banners
-          { isPublic: true },
-          
-          // Banners targeted to this specific user
-          { 
-            audienceMode: 'user',
-            targetUserIds: user._id.toString(),
-          },
-          
-          // Banners targeted to user's role
-          ...(roleIds.length > 0 ? [{ 
-            audienceMode: 'role',
-            targetRoleIds: { $in: roleIds },
-          }] : []),
-          
-          // Banners targeted to user's groups
-          ...(groupIds.length > 0 ? [{ 
-            audienceMode: 'group',
-            targetGroupIds: { 
-              $in: groupIds.map(id => id.toString()) 
-            },
-          }] : []),
-        ],
-      };
+      const groupIds = userGroups.map(g => g._id.toString());
+      
+      // Build audience query conditions
+      const audienceConditions: any[] = [
+        // Legacy banners (no audienceMode) - show to everyone
+        { audienceMode: { $exists: false } },
+        
+        // Global banners
+        { audienceMode: 'global' },
+        
+        // Public banners
+        { isPublic: true },
+        
+        // Banners targeted to this specific user
+        { 
+          audienceMode: 'user',
+          targetUserIds: user._id.toString(),
+        },
+      ];
+      
+      // Add role condition if user has a role
+      if (user.role) {
+        audienceConditions.push({
+          audienceMode: 'role',
+          targetRoleIds: user.role,
+        });
+      }
+      
+      // Add group conditions if user is in any groups
+      if (groupIds.length > 0) {
+        audienceConditions.push({
+          audienceMode: 'group',
+          targetGroupIds: { $in: groupIds },
+        });
+      }
       
       // Execute query
       const query = Banner.find({ 
-        ...baseQuery, 
-        ...audienceQuery,
+        ...baseQuery,
+        $or: audienceConditions,
       })
         .sort({ priority: -1, order: 1, displayFrom: -1 })
         .limit(limit);
