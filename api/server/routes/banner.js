@@ -25,7 +25,8 @@ router.get('/', optionalJwtAuth, async (req, res) => {
  */
 router.get('/list', optionalJwtAuth, async (req, res) => {
   try {
-    const limit = req.query.limit ? parseInt(req.query.limit, 10) : 10;
+    const parsedLimit = Number.parseInt(String(req.query.limit ?? ''), 10);
+    const limit = Number.isNaN(parsedLimit) ? 10 : Math.min(Math.max(parsedLimit, 1), 50);
     const banners = await getActiveBanners(req.user, { limit });
     res.status(200).json(banners);
   } catch (error) {

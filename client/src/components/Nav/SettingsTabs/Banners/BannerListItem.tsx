@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import { Edit2, Trash2, Power, Globe, Users, User, Shield } from 'lucide-react';
 import { Button, cn } from '@librechat/client';
 import { useLocalize } from '~/hooks';
@@ -19,6 +21,10 @@ const AUDIENCE_ICONS = {
 
 export const BannerListItem = ({ banner, onEdit, onDelete, onToggle }: BannerListItemProps) => {
     const localize = useLocalize();
+    const sanitizedMessage = useMemo(
+        () => DOMPurify.sanitize(banner.message),
+        [banner.message],
+    );
 
     const AudienceIcon = AUDIENCE_ICONS[banner.audienceMode || 'global'];
 
@@ -46,7 +52,7 @@ export const BannerListItem = ({ banner, onEdit, onDelete, onToggle }: BannerLis
                     {/* Message */}
                     <div
                         className="mb-2 line-clamp-2 text-text-primary [&_a]:text-blue-600 [&_a]:underline"
-                        dangerouslySetInnerHTML={{ __html: banner.message }}
+                        dangerouslySetInnerHTML={{ __html: sanitizedMessage }}
                     />
 
                     {/* Metadata */}

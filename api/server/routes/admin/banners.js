@@ -120,11 +120,18 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
+        const existingBanner = await db.getBannerById(id, undefined, req.user.tenantId);
+
+        if (!existingBanner) {
+            return res.status(404).json({
+                message: 'Banner not found'
+            });
+        }
 
         // Prevent changing tenantId
         delete req.body.tenantId;
 
-        const banner = await db.updateBanner(id, req.body);
+        const banner = await db.updateBanner(id, req.body, undefined, req.user.tenantId);
 
         if (!banner) {
             return res.status(404).json({
@@ -157,7 +164,7 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const deleted = await db.deleteBanner(id);
+        const deleted = await db.deleteBanner(id, undefined, req.user.tenantId);
 
         if (!deleted) {
             return res.status(404).json({
@@ -181,7 +188,7 @@ router.delete('/:id', async (req, res) => {
 router.patch('/:id/toggle', async (req, res) => {
     try {
         const { id } = req.params;
-        const banner = await db.toggleBanner(id);
+        const banner = await db.toggleBanner(id, undefined, req.user.tenantId);
 
         if (!banner) {
             return res.status(404).json({

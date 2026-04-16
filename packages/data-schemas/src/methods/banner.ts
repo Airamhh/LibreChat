@@ -1,10 +1,8 @@
 import type { Model, ClientSession, FilterQuery } from 'mongoose';
 import { Types } from 'mongoose';
-import { v5 as uuidv5 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import logger from '~/config/winston';
 import type { IBanner, IUser, IRole, IGroup } from '~/types';
-
-const NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
 
 export function createBannerMethods(mongoose: typeof import('mongoose')) {
   /**
@@ -25,14 +23,22 @@ export function createBannerMethods(mongoose: typeof import('mongoose')) {
     const Banner = mongoose.models.Banner as Model<IBanner>;
     const now = new Date();
     const limit = options?.limit || 10;
+    const tenantId = user?.tenantId;
+    const tenantScope = tenantId
+      ? [{ tenantId }, { tenantId: { $exists: false } }, { tenantId: null }]
+      : [{ tenantId: { $exists: false } }, { tenantId: null }];
     
     try {
       // Base query: active banners within date range
       const baseQuery: FilterQuery<IBanner> = {
         displayFrom: { $lte: now },
-        $or: [
-          { displayTo: { $gte: now } },
-          { displayTo: null },
+        $and: [
+          {
+            $or: [{ displayTo: { $gte: now } }, { displayTo: null }],
+          },
+          {
+            $or: tenantScope,
+          },
         ],
         type: 'banner',
         isActive: { $ne: false }, // true or undefined
@@ -59,19 +65,27 @@ export function createBannerMethods(mongoose: typeof import('mongoose')) {
       const User = mongoose.models.User as Model<IUser>;
       
       // Find user's idOnTheSource for group lookup
-      const userDoc = await User.findById(user._id, 'idOnTheSource').session(options?.session || null).lean();
+      const userQuery = User.findById(user._id, 'idOnTheSource').lean();
+      if (options?.session) {
+        userQuery.session(options.session);
+      }
+      const userDoc = await userQuery;
       const userIdOnTheSource = userDoc?.idOnTheSource || user._id.toString();
       
       // Find all groups the user is a member of
-      const userGroups = await Group.find(
+      const groupQuery = Group.find(
         { memberIds: userIdOnTheSource },
         '_id'
-      ).session(options?.session || null).lean();
+      ).lean();
+      if (options?.session) {
+        groupQuery.session(options.session);
+      }
+      const userGroups = await groupQuery;
       
       const groupIds = userGroups.map(g => g._id.toString());
       
       // Build audience query conditions
-      const audienceConditions: any[] = [
+      const audienceConditions: FilterQuery<IBanner>[] = [
         // Legacy banners (no audienceMode) - show to everyone
         { audienceMode: { $exists: false } },
         
@@ -178,7 +192,7 @@ export function createBannerMethods(mongoose: typeof import('mongoose')) {
       }
       
       // Generate unique bannerId
-      const bannerId = uuidv5(data.message.trim(), NAMESPACE);
+      const bannerId = uuidv4();
       
       // Create banner
       const bannerData: Partial<IBanner> = {
@@ -211,7 +225,8 @@ export function createBannerMethods(mongoose: typeof import('mongoose')) {
   async function updateBanner(
     bannerId: string,
     updates: Partial<IBanner>,
-    session?: ClientSession
+    session?: ClientSession,
+    tenantId?: string
   ): Promise<IBanner | null> {
     const Banner = mongoose.models.Banner as Model<IBanner>;
     
@@ -243,10 +258,14 @@ export function createBannerMethods(mongoose: typeof import('mongoose')) {
       }
       
       // Remove bannerId from updates (immutable)
-      const { bannerId: _, ...safeUpdates } = updates as any;
+      const { bannerId: _ignoredBannerId, ...safeUpdates } = updates;
+      const filter: FilterQuery<IBanner> = { bannerId };
+      if (tenantId) {
+        filter.tenantId = tenantId;
+      }
       
       const query = Banner.findOneAndUpdate(
-        { bannerId },
+        filter,
         { $set: safeUpdates },
         { new: true }
       );
@@ -276,12 +295,17 @@ export function createBannerMethods(mongoose: typeof import('mongoose')) {
    */
   async function deleteBanner(
     bannerId: string,
-    session?: ClientSession
+    session?: ClientSession,
+    tenantId?: string
   ): Promise<boolean> {
     const Banner = mongoose.models.Banner as Model<IBanner>;
     
     try {
-      const query = Banner.deleteOne({ bannerId });
+      const filter: FilterQuery<IBanner> = { bannerId };
+      if (tenantId) {
+        filter.tenantId = tenantId;
+      }
+      const query = Banner.deleteOne(filter);
       
       if (session) {
         query.session(session);
@@ -357,12 +381,17 @@ export function createBannerMethods(mongoose: typeof import('mongoose')) {
    */
   async function toggleBanner(
     bannerId: string,
-    session?: ClientSession
+    session?: ClientSession,
+    tenantId?: string
   ): Promise<IBanner | null> {
     const Banner = mongoose.models.Banner as Model<IBanner>;
     
     try {
-      const findQuery = Banner.findOne({ bannerId });
+      const filter: FilterQuery<IBanner> = { bannerId };
+      if (tenantId) {
+        filter.tenantId = tenantId;
+      }
+      const findQuery = Banner.findOne(filter);
       
       if (session) {
         findQuery.session(session);
@@ -395,12 +424,17 @@ export function createBannerMethods(mongoose: typeof import('mongoose')) {
    */
   async function getBannerById(
     bannerId: string,
-    session?: ClientSession
+    session?: ClientSession,
+    tenantId?: string
   ): Promise<IBanner | null> {
     const Banner = mongoose.models.Banner as Model<IBanner>;
     
     try {
-      const query = Banner.findOne({ bannerId });
+      const filter: FilterQuery<IBanner> = { bannerId };
+      if (tenantId) {
+        filter.tenantId = tenantId;
+      }
+      const query = Banner.findOne(filter);
       
       if (session) {
         query.session(session);

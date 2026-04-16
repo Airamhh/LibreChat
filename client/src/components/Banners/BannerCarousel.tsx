@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import DOMPurify from 'dompurify';
 import { XIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRecoilState } from 'recoil';
 import { Button, cn } from '@librechat/client';
@@ -69,6 +70,10 @@ export const BannerCarousel = ({
     };
 
     const showNavigation = visibleBanners.length > 1;
+    const sanitizedMessage = useMemo(
+        () => DOMPurify.sanitize(currentBanner.message),
+        [currentBanner.message],
+    );
 
     return (
         <div
@@ -97,7 +102,7 @@ export const BannerCarousel = ({
                         'text-md w-full truncate text-center [&_a]:text-blue-700 [&_a]:underline dark:[&_a]:text-blue-400',
                         !currentBanner.persistable && 'px-4',
                     )}
-                    dangerouslySetInnerHTML={{ __html: currentBanner.message }}
+                    dangerouslySetInnerHTML={{ __html: sanitizedMessage }}
                 ></div>
 
                 {/* Pagination dots */}

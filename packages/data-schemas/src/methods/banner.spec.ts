@@ -1,7 +1,7 @@
 const { Types } = require('mongoose');
 const {
   createBannerMethods,
-} = require('../banner');
+} = require('./banner');
 
 describe('Banner Methods', () => {
   let mongoose;
@@ -60,7 +60,8 @@ describe('Banner Methods', () => {
       Banner.find.mockReturnValue({
         sort: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
-        session: jest.fn().mockResolvedValue(mockBanners),
+        session: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockResolvedValue(mockBanners),
       });
 
       const result = await bannerMethods.getActiveBanners(null);
@@ -89,7 +90,8 @@ describe('Banner Methods', () => {
       Banner.find.mockReturnValue({
         sort: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
-        session: jest.fn().mockResolvedValue([currentBanner]),
+        session: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockResolvedValue([currentBanner]),
       });
 
       const result = await bannerMethods.getActiveBanners(null);
@@ -108,7 +110,8 @@ describe('Banner Methods', () => {
       Banner.find.mockReturnValue({
         sort: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
-        session: jest.fn().mockResolvedValue(mockBanners.slice(0, 5)),
+        session: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockResolvedValue(mockBanners.slice(0, 5)),
       });
 
       const result = await bannerMethods.getActiveBanners(null, { limit: 5 });

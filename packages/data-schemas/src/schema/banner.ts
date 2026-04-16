@@ -101,6 +101,7 @@ const bannerSchema = new Schema<IBanner>(
 );
 
 // Indexes for performance
+bannerSchema.index({ bannerId: 1 }, { unique: true });
 bannerSchema.index({ displayFrom: 1, displayTo: 1, isActive: 1 });
 bannerSchema.index({ audienceMode: 1, isActive: 1 });
 bannerSchema.index({ targetRoleIds: 1 }, { sparse: true });

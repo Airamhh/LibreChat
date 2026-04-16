@@ -8,16 +8,16 @@
  * Usage: node migrate-banners.js
  */
 
-const { connect, closeConnection } = require('./connect');
+const mongoose = require('mongoose');
+const connect = require('./connect');
+const { Banner } = require('@librechat/data-schemas').createModels(mongoose);
 const logger = require('./helpers').logger;
 
 async function migrateBanners() {
-    const db = await connect();
+    await connect();
     logger.info('[migrate-banners] Starting banner migration...');
 
     try {
-        const Banner = db.models.Banner;
-
         // Find all banners without audienceMode
         const existingBanners = await Banner.find({
             $or: [
@@ -86,7 +86,9 @@ async function migrateBanners() {
         logger.error('[migrate-banners] Migration failed:', error);
         throw error;
     } finally {
-        await closeConnection();
+        if (mongoose.connection.readyState !== 0) {
+            await mongoose.connection.close();
+        }
     }
 }
 

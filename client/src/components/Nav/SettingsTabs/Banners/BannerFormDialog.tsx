@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import {
     OGDialog,
@@ -80,8 +80,8 @@ export const BannerFormDialog = ({ banner, onClose }: BannerFormDialogProps) => 
                 priority: data.priority,
                 isActive: data.isActive,
                 persistable: data.persistable,
-                displayFrom: data.displayFrom ? new Date(data.displayFrom) : undefined,
-                displayTo: data.displayTo ? new Date(data.displayTo) : undefined,
+                displayFrom: data.displayFrom ? new Date(data.displayFrom).toISOString() : undefined,
+                displayTo: data.displayTo ? new Date(data.displayTo).toISOString() : undefined,
             };
 
             // Add audience-specific fields
@@ -133,7 +133,7 @@ export const BannerFormDialog = ({ banner, onClose }: BannerFormDialogProps) => 
                                 <Textarea
                                     {...field}
                                     id="message"
-                                    placeholder="Enter banner message (HTML allowed)"
+                                    placeholder="Enter banner message"
                                     rows={3}
                                     className={errors.message ? 'border-red-500' : ''}
                                 />
