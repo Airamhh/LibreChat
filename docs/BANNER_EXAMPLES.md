@@ -833,20 +833,40 @@ npm run test-banners delete
 **Problema**: "No test banners found"
 ```bash
 # Verificar en MongoDB
-mongo librechat --eval 'db.banners.find({message: /^\[TEST\]/}).count()'
+mongosh librechat --eval 'db.banners.find({message: /^\[TEST\]/}).count()'
 ```
 
-**Problema**: Solo veo 1 banner de 15
+**Problema**: Solo veo 1 banner de 15 creados ⚠️ COMÚN
+
+**Causa**: Los banners dismissed se guardan en `localStorage` del navegador. Si dismissaste banners de prueba anteriores, siguen "ocultos" aunque recrees los banners.
+
+**Solución**:
+```javascript
+// Opción 1: Desde consola del navegador (F12)
+localStorage.removeItem('hideBannerHint');
+location.reload();
+
+// Opción 2: Limpiar todo localStorage
+localStorage.clear();
+location.reload();
+
+// Opción 3: Borrar datos del sitio (Settings > Privacy)
+```
+
+**Verificación**:
 ```bash
 # 1. Verificar que el backend devuelve múltiples
 curl http://localhost:3080/api/banner/list \
   -H "Authorization: Bearer YOUR_TOKEN"
 
-# 2. Ver estadísticas
+# Deberías ver un array con 9-12 banners (según tu rol)
+
+# 2. Ver estadísticas en BD
 npm run test-banners stats
 
-# 3. Verificar logs
-tail -f api/logs/combined.log | grep banner
+# 3. Verificar logs del backend
+tail -f api/logs/combined.log | grep "getActiveBanners"
+# Debería mostrar: "Found N banners for user X" con N > 1
 ```
 
 **Problema**: Banners no visibles por audienceMode
