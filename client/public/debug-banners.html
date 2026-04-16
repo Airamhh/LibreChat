@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LibreChat Banner Debug Tool</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #718096;
+            margin-bottom: 24px;
+        }
+        button {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        button:hover {
+            background: #3182ce;
+        }
+        button.danger {
+            background: #f56565;
+        }
+        button.danger:hover {
+            background: #e53e3e;
+        }
+        button.success {
+            background: #48bb78;
+        }
+        button.success:hover {
+            background: #38a169;
+        }
+        pre {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .result {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .result.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        .result.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+        .result.warning {
+            background: #feebc8;
+            color: #744210;
+            border: 1px solid #f6ad55;
+        }
+        .result.info {
+            background: #bee3f8;
+            color: #2c5282;
+            border: 1px solid #90cdf4;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        th, td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background: #edf2f7;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge.yes {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        .badge.no {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🔍 LibreChat Multi-Banner Debug Tool</h1>
+        <p class="subtitle">Herramienta de diagnóstico para problemas con banners múltiples</p>
+        
+        <div>
+            <h3>🛠️ Acciones Rápidas</h3>
+            <button onclick="clearDismissed()" class="danger">Limpiar Banners Dismissed</button>
+            <button onclick="checkLocalStorage()">Ver localStorage</button>
+            <button onclick="checkAPI()">Verificar API</button>
+            <button onclick="runFullDiagnostic()" class="success">🚀 Diagnóstico Completo</button>
+            <button onclick="clearResults()">Limpiar Resultados</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <div class="card">
+        <h3>📝 Instrucciones</h3>
+        <ol>
+            <li><strong>Limpiar Banners Dismissed</strong>: Elimina todos los banners que hayas descartado</li>
+            <li><strong>Ver localStorage</strong>: Muestra qué banners has dismissed</li>
+            <li><strong>Verificar API</strong>: Comprueba cuántos banners devuelve el backend</li>
+            <li><strong>Diagnóstico Completo</strong>: Ejecuta todas las comprobaciones</li>
+        </ol>
+        <p><strong>Nota:</strong> Esta herramienta debe abrirse en la misma pestaña donde está LibreChat (mismo dominio) o usar las DevTools del navegador.</p>
+    </div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+
+        function addResult(html) {
+            resultsDiv.innerHTML += html;
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+        }
+
+        function clearDismissed() {
+            try {
+                const before = JSON.parse(localStorage.getItem('hideBannerHint') || '[]');
+                localStorage.removeItem('hideBannerHint');
+                
+                addResult(`
+                    <div class="result success">
+                        <strong>✅ localStorage limpiado!</strong><br>
+                        Banners dismissed eliminados: ${before.length}<br>
+                        <br>
+                        <strong>Ahora recarga la página:</strong><br>
+                        <button onclick="location.reload()" class="success">🔄 Recargar Página</button>
+                    </div>
+                `);
+            } catch (error) {
+                addResult(`
+                    <div class="result error">
+                        <strong>❌ Error:</strong> ${error.message}
+                    </div>
+                `);
+            }
+        }
+
+        function checkLocalStorage() {
+            try {
+                const hidden = JSON.parse(localStorage.getItem('hideBannerHint') || '[]');
+                
+                if (hidden.length === 0) {
+                    addResult(`
+                        <div class="result success">
+                            <strong>✅ No hay banners dismissed</strong><br>
+                            Tu localStorage está limpio.
+                        </div>
+                    `);
+                } else {
+                    addResult(`
+                        <div class="result warning">
+                            <strong>⚠️ Banners dismissed encontrados: ${hidden.length}</strong><br>
+                            <pre>${JSON.stringify(hidden, null, 2)}</pre>
+                            <br>
+                            Estos banners están ocultos. Para verlos de nuevo:<br>
+                            <button onclick="clearDismissed()" class="danger">Limpiar Ahora</button>
+                        </div>
+                    `);
+                }
+            } catch (error) {
+                addResult(`
+                    <div class="result error">
+                        <strong>❌ Error:</strong> ${error.message}
+                    </div>
+                `);
+            }
+        }
+
+        async function checkAPI() {
+            try {
+                addResult(`<div class="result info">🔄 Consultando API...</div>`);
+                
+                const response = await fetch('/api/banner/list');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const banners = await response.json();
+                
+                if (banners.length === 0) {
+                    addResult(`
+                        <div class="result error">
+                            <strong>❌ No se recibieron banners</strong><br>
+                            Posibles causas:<br>
+                            • Backend no está corriendo<br>
+                            • No estás autenticado<br>
+                            • No hay banners en la base de datos<br>
+                            <br>
+                            <strong>Solución:</strong><br>
+                            1. Verifica que el backend esté corriendo: <code>npm run backend:dev</code><br>
+                            2. Asegúrate de estar logueado en LibreChat<br>
+                            3. Crea banners de prueba: <code>npm run test-banners create</code>
+                        </div>
+                    `);
+                } else {
+                    const tableRows = banners.map((b, idx) => `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td>${b.message.substring(0, 50)}...</td>
+                            <td>${b.priority || 50}</td>
+                            <td>${b.audienceMode || 'legacy'}</td>
+                            <td><span class="badge ${b.persistable ? 'yes' : 'no'}">${b.persistable ? 'Sí' : 'No'}</span></td>
+                        </tr>
+                    `).join('');
+                    
+                    addResult(`
+                        <div class="result success">
+                            <strong>✅ API respondió correctamente</strong><br>
+                            Banners recibidos: ${banners.length}<br>
+                            <br>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Mensaje</th>
+                                        <th>Prioridad</th>
+                                        <th>Audiencia</th>
+                                        <th>Persistente</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    `);
+                }
+            } catch (error) {
+                addResult(`
+                    <div class="result error">
+                        <strong>❌ Error al consultar API:</strong><br>
+                        ${error.message}<br>
+                        <br>
+                        <strong>¿El backend está corriendo?</strong><br>
+                        Ejecuta: <code>npm run backend:dev</code>
+                    </div>
+                `);
+            }
+        }
+
+        async function runFullDiagnostic() {
+            clearResults();
+            
+            addResult(`<div class="result info"><strong>🚀 Ejecutando diagnóstico completo...</strong></div>`);
+            
+            // 1. localStorage
+            addResult(`<h4>1️⃣ Verificando localStorage...</h4>`);
+            checkLocalStorage();
+            
+            // 2. API
+            addResult(`<h4>2️⃣ Verificando API...</h4>`);
+            await checkAPI();
+            
+            // 3. Análisis
+            addResult(`<h4>3️⃣ Análisis...</h4>`);
+            
+            try {
+                const hidden = JSON.parse(localStorage.getItem('hideBannerHint') || '[]');
+                const response = await fetch('/api/banner/list');
+                const banners = await response.json();
+                
+                const visibleBanners = banners.filter(b => 
+                    !b.bannerId || b.persistable || !hidden.includes(b.bannerId)
+                );
+                
+                const showNavigation = visibleBanners.length > 1;
+                
+                let diagnosis = '';
+                let resultClass = 'info';
+                
+                if (banners.length === 0) {
+                    diagnosis = '❌ No hay banners en el backend. Crea algunos con: <code>npm run test-banners create</code>';
+                    resultClass = 'error';
+                } else if (visibleBanners.length === 0) {
+                    diagnosis = '❌ Todos los banners están dismissed. Limpia localStorage y recarga.';
+                    resultClass = 'error';
+                } else if (visibleBanners.length === 1 && banners.length > 1) {
+                    diagnosis = `⚠️ Solo 1 banner visible de ${banners.length} totales. ${banners.length - 1} están dismissed. Limpia localStorage para verlos.`;
+                    resultClass = 'warning';
+                } else if (showNavigation) {
+                    diagnosis = `✅ Todo correcto! Tienes ${visibleBanners.length} banners visibles. Deberías ver flechas y puntos de navegación.`;
+                    resultClass = 'success';
+                } else {
+                    diagnosis = `ℹ️ Tienes ${visibleBanners.length} banner(es) visible(s).`;
+                    resultClass = 'info';
+                }
+                
+                addResult(`
+                    <div class="result ${resultClass}">
+                        <strong>Resultado:</strong><br>
+                        ${diagnosis}<br>
+                        <br>
+                        <strong>Detalles:</strong><br>
+                        • Banners totales: ${banners.length}<br>
+                        • Banners dismissed: ${hidden.length}<br>
+                        • Banners visibles: ${visibleBanners.length}<br>
+                        • Navegación mostrada: <span class="badge ${showNavigation ? 'yes' : 'no'}">${showNavigation ? 'SÍ' : 'NO'}</span>
+                    </div>
+                `);
+                
+                if (!showNavigation && banners.length > 1) {
+                    addResult(`
+                        <div class="result warning">
+                            <strong>💡 Solución Recomendada:</strong><br>
+                            <button onclick="clearDismissed()" class="danger">Limpiar Banners Dismissed</button>
+                        </div>
+                    `);
+                }
+                
+            } catch (error) {
+                addResult(`
+                    <div class="result error">
+                        <strong>❌ Error en análisis:</strong> ${error.message}
+                    </div>
+                `);
+            }
+        }
+    </script>
+</body>
+</html>
