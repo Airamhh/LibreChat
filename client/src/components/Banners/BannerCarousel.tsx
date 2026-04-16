@@ -4,6 +4,7 @@ import { useRecoilState } from 'recoil';
 import { Button, cn } from '@librechat/client';
 import { useBannersQuery } from '~/data-provider';
 import { useBannerRotation } from '~/hooks/Banners';
+import { useLocalize } from '~/hooks';
 import store from '~/store';
 
 export interface BannerCarouselProps {
@@ -23,6 +24,7 @@ export const BannerCarousel = ({
     const { data: banners = [] } = useBannersQuery();
     const [hideBannerHint, setHideBannerHint] = useRecoilState<string[]>(store.hideBannerHint);
     const bannerRef = useRef<HTMLDivElement>(null);
+    const localize = useLocalize();
 
     // Filter out dismissed banners
     const visibleBanners = banners.filter(
@@ -80,7 +82,7 @@ export const BannerCarousel = ({
                 <Button
                     size="icon"
                     variant="ghost"
-                    aria-label="Previous banner"
+                    aria-label={localize('com_ui_banner_previous')}
                     className="size-8 shrink-0"
                     onClick={previousBanner}
                 >
@@ -111,7 +113,7 @@ export const BannerCarousel = ({
                                         ? 'w-4 bg-gray-700 dark:bg-gray-200'
                                         : 'bg-gray-400 hover:bg-gray-600 dark:bg-gray-500 dark:hover:bg-gray-300',
                                 )}
-                                aria-label={`Go to banner ${index + 1}`}
+                                aria-label={localize('com_ui_banner_go_to', String(index + 1))}
                             />
                         ))}
                     </div>
@@ -123,7 +125,7 @@ export const BannerCarousel = ({
                 <Button
                     size="icon"
                     variant="ghost"
-                    aria-label="Dismiss banner"
+                    aria-label={localize('com_ui_banner_dismiss')}
                     className="size-8 shrink-0"
                     onClick={handleDismiss}
                 >
@@ -136,7 +138,7 @@ export const BannerCarousel = ({
                 <Button
                     size="icon"
                     variant="ghost"
-                    aria-label="Next banner"
+                    aria-label={localize('com_ui_banner_next')}
                     className="size-8 shrink-0"
                     onClick={nextBanner}
                 >
