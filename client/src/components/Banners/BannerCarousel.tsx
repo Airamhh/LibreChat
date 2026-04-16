@@ -100,16 +100,16 @@ export const BannerCarousel = ({
 
                 {/* Pagination dots */}
                 {showNavigation && (
-                    <div className="flex gap-1">
+                    <div className="flex gap-1.5">
                         {visibleBanners.map((_, index) => (
                             <button
                                 key={index}
                                 onClick={() => goToBanner(index)}
                                 className={cn(
-                                    'h-1.5 w-1.5 rounded-full transition-all',
+                                    'h-2 w-2 rounded-full transition-all',
                                     index === currentIndex
-                                        ? 'w-3 bg-text-primary'
-                                        : 'bg-text-primary/40 hover:bg-text-primary/60',
+                                        ? 'w-4 bg-gray-700 dark:bg-gray-200'
+                                        : 'bg-gray-400 hover:bg-gray-600 dark:bg-gray-500 dark:hover:bg-gray-300',
                                 )}
                                 aria-label={`Go to banner ${index + 1}`}
                             />
@@ -117,19 +117,6 @@ export const BannerCarousel = ({
                     </div>
                 )}
             </div>
-
-            {/* Next button */}
-            {showNavigation && (
-                <Button
-                    size="icon"
-                    variant="ghost"
-                    aria-label="Next banner"
-                    className="size-8 shrink-0"
-                    onClick={nextBanner}
-                >
-                    <ChevronRight className="h-4 w-4 text-text-primary" aria-hidden="true" />
-                </Button>
-            )}
 
             {/* Dismiss button */}
             {!currentBanner.persistable && (
@@ -141,6 +128,19 @@ export const BannerCarousel = ({
                     onClick={handleDismiss}
                 >
                     <XIcon className="h-4 w-4 text-text-primary" aria-hidden="true" />
+                </Button>
+            )}
+
+            {/* Next button */}
+            {showNavigation && (
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label="Next banner"
+                    className="size-8 shrink-0"
+                    onClick={nextBanner}
+                >
+                    <ChevronRight className="h-4 w-4 text-text-primary" aria-hidden="true" />
                 </Button>
             )}
         </div>
