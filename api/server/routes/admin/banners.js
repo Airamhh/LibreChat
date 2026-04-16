@@ -120,13 +120,6 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const existingBanner = await db.getBannerById(id, undefined, req.user.tenantId);
-
-        if (!existingBanner) {
-            return res.status(404).json({
-                message: 'Banner not found'
-            });
-        }
 
         // Prevent changing tenantId
         delete req.body.tenantId;

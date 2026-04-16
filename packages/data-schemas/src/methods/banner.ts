@@ -258,7 +258,8 @@ export function createBannerMethods(mongoose: typeof import('mongoose')) {
       }
       
       // Remove bannerId from updates (immutable)
-      const { bannerId: _ignoredBannerId, ...safeUpdates } = updates;
+      const safeUpdates: Partial<IBanner> = { ...updates };
+      delete safeUpdates.bannerId;
       const filter: FilterQuery<IBanner> = { bannerId };
       if (tenantId) {
         filter.tenantId = tenantId;
